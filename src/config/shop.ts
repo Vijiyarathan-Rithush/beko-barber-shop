@@ -31,7 +31,8 @@ directionsUrl.searchParams.set('destination', address);
 
 export const routes = {
     home: homePath,
-    booking: homePath + 'buchen/'
+    booking: homePath + 'buchen/',
+    staffLogin: homePath + 'verwaltung/anmelden/'
 } as const;
 
 interface ShopConfig

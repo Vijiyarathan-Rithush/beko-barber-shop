@@ -13,7 +13,7 @@ const staffLogin = typeof __BEKO_STAFF_LOGIN__ !== 'undefined' && __BEKO_STAFF_L
             {shop.phone && <a href={'tel:' + shop.phone.replaceAll(' ', '')}>{shop.phone}</a>}
             {shop.instagramUrl && <a href={shop.instagramUrl}>Instagram</a>}
             <a href={shop.directionsUrl}>Route planen</a>
-            {staffLogin && <a href="/verwaltung/anmelden/">Mitarbeiter-Login</a>}
+            {staffLogin && <a href={routes.staffLogin}>Mitarbeiter-Login</a>}
         </div>
     </div>
 </footer>

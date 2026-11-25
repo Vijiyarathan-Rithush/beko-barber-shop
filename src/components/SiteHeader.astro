@@ -8,9 +8,11 @@ interface Props
 }
 
 const { bookingPage } = Astro.props;
+const staffLogin = typeof __BEKO_STAFF_LOGIN__ !== 'undefined' && __BEKO_STAFF_LOGIN__;
+const onStaffLogin = Astro.url.pathname.replace(/\/$/, '') === routes.staffLogin.replace(/\/$/, '');
 ---
 
-<header class="site-header" data-site-header>
+<header class="site-header" data-site-header data-staff-login={staffLogin ? '' : undefined}>
     <div class="header-content layout-width">
         <a class="brand" href={routes.home} aria-label="Beko’s Barber Shop, Startseite">
             {shop.logoPath && <img src={shop.logoPath} alt="" width="56" height="56" />}
@@ -19,6 +21,11 @@ const { bookingPage } = Astro.props;
                 <span>BARBER SHOP</span>
             </span>
         </a>
+        {staffLogin && (
+            <a class="staff-login" href={routes.staffLogin} aria-current={onStaffLogin ? 'page' : undefined}>
+                Login<span class="sr-only"> für Mitarbeitende</span>
+            </a>
+        )}
         <button class="menu-toggle" type="button" aria-label="Menü öffnen" aria-expanded="false" aria-controls="site-navigation" data-menu-toggle hidden>
             <Icon name="menu" class="menu-open-icon" />
             <Icon name="close" class="menu-close-icon" />
@@ -149,6 +156,34 @@ const { bookingPage } = Astro.props;
         letter-spacing: .21em;
     }
 
+    .staff-login {
+        display: inline-flex;
+        min-height: 2.75rem;
+        flex: none;
+        align-items: center;
+        margin-inline: auto .45rem;
+        padding-inline: .7rem;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        color: var(--text);
+        font-size: .875rem;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .staff-login:hover,
+    .staff-login[aria-current='page'] {
+        border-color: var(--accent);
+        color: var(--accent-hover);
+    }
+
+    @media (max-width: 24rem) {
+        [data-staff-login] .brand { gap: .55rem; }
+        [data-staff-login] .brand img { width: 2.75rem; height: 2.75rem; }
+        [data-staff-login] .brand-type { padding-left: .5rem; }
+        [data-staff-login] .brand-type strong { font-size: 1.65rem; }
+    }
+
     .menu-toggle {
         display: grid;
         width: 2.75rem;
@@ -218,13 +253,17 @@ const { bookingPage } = Astro.props;
             display: none;
         }
 
+        [data-staff-login] .header-content { gap: clamp(.7rem, 1.75vw, 1.5rem); }
+        [data-staff-login] { --navigation-gap: clamp(.75rem, 1.7vw, 2.65rem); }
+        .staff-login { margin-inline-end: 0; }
+
         nav,
         [data-menu-ready] .menu-toggle[aria-expanded='false'] + nav {
             display: flex;
             width: auto;
             flex-direction: row;
             align-items: center;
-            gap: clamp(1rem, 2.7vw, 2.65rem);
+            gap: var(--navigation-gap, clamp(1rem, 2.7vw, 2.65rem));
             padding: 0;
             border: 0;
         }
@@ -232,5 +271,6 @@ const { bookingPage } = Astro.props;
         .nav-booking {
             align-self: center;
         }
+
     }
 </style>

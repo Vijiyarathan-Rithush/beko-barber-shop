@@ -42,7 +42,7 @@ else if (await staffSession(client))
 }
 ---
 
-<StaffForm title="Terminverwaltung" {error}>
+<StaffForm title="Mitarbeiter-Login" {error}>
     <form method="post" action="/verwaltung/anmelden/">
         <label>E-Mail-Adresse
             <input name="email" type="email" autocomplete="username" maxlength="254" value={email} required />
