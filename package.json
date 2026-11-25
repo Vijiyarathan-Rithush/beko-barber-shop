@@ -1,0 +1,26 @@
+{
+    "name": "beko-barber-shop",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "packageManager": "npm@11.19.1",
+    "engines": {
+        "node": ">=22.23.4"
+    },
+    "scripts": {
+        "dev": "astro dev",
+        "check": "astro check",
+        "build": "astro build",
+        "preview": "astro preview"
+    },
+    "dependencies": {
+        "@fontsource/barlow-condensed": "^5.2.0",
+        "@fontsource/inter": "^5.2.0",
+        "astro": "7.4.13"
+    },
+    "devDependencies": {
+        "@astrojs/check": "^0.9.4",
+        "sass": "^1.86.0",
+        "typescript": "~5.9.3"
+    }
+}

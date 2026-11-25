@@ -1,0 +1,49 @@
+---
+import Icon from './Icon.astro';
+import { shop } from '../config/shop';
+---
+
+<section class="review-section" id="bewertungen" tabindex="-1" aria-labelledby="reviews-heading">
+    <h2 class="section-title" id="reviews-heading">Bewertungen</h2>
+    {shop.reviewUrl ? (
+        <a class="action action--outline review-action" href={shop.reviewUrl}>
+            <Icon name="star" />
+            Bewertung abgeben
+        </a>
+    ) : (
+        <p class="review-status">
+            <Icon name="star" />
+            Bewertungslink folgt
+        </p>
+    )}
+</section>
+
+<style lang="scss">
+    .review-section {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1.1rem 2rem;
+        padding: 1.65rem 0;
+        border-block: 1px solid var(--line);
+    }
+
+    .review-status {
+        display: inline-flex;
+        min-height: 2.75rem;
+        align-items: center;
+        gap: .65rem;
+        color: var(--muted);
+    }
+
+    .review-status :global(.icon) {
+        color: var(--accent);
+    }
+
+    @media (min-width: 52rem) {
+        .review-section {
+            padding-block: 2rem;
+        }
+    }
+</style>

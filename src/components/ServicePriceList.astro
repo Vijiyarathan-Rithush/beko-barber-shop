@@ -1,0 +1,86 @@
+---
+import Icon from './Icon.astro';
+import { SERVICES, formatPrice } from '../features/booking/domain/services';
+
+const featuredIds = ['haircut', 'haircut-and-beard', 'beard'];
+const featuredServices = SERVICES.filter((service) => featuredIds.includes(service.id));
+---
+
+<section class="home-section" id="leistungen" tabindex="-1" aria-labelledby="services-heading">
+    <h2 class="section-title" id="services-heading">Leistungen &amp; Preise</h2>
+    <div class="service-list">
+        <ul>
+            {featuredServices.map((service) => (
+                <li>
+                    <a href={'/buchen/?service=' + service.id}>
+                        <span>{service.name}</span>
+                        <span class="price">{formatPrice(service.priceChf)}</span>
+                    </a>
+                </li>
+            ))}
+        </ul>
+        <a class="text-action all-services" href="/buchen/">
+            Alle Leistungen
+            <Icon name="chevron" />
+        </a>
+    </div>
+</section>
+
+<style lang="scss">
+    .home-section {
+        display: grid;
+        gap: 1rem;
+        padding: 1.75rem 0 1.25rem;
+        border-top: 1px solid var(--line);
+    }
+
+    ul {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    li {
+        border-bottom: 1px solid var(--line);
+    }
+
+    li a {
+        display: flex;
+        min-height: 3.35rem;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: .6rem 0;
+        font-size: clamp(1rem, 2.1vw, 1.2rem);
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    li a:hover {
+        color: var(--accent-hover);
+    }
+
+    .price {
+        flex-shrink: 0;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .all-services {
+        margin-top: .5rem;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+    }
+
+    .all-services :global(.icon) {
+        color: var(--accent);
+    }
+
+    @media (min-width: 52rem) {
+        .home-section {
+            grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+            gap: 3rem;
+            padding: 2.35rem 0 1.7rem;
+        }
+    }
+</style>

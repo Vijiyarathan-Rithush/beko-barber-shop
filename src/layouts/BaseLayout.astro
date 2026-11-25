@@ -1,0 +1,43 @@
+---
+import '@fontsource/barlow-condensed/latin-800.css';
+import '@fontsource/inter/latin-400.css';
+import '@fontsource/inter/latin-600.css';
+import '@fontsource/inter/latin-700.css';
+import '../styles/global.scss';
+import SiteHeader from '../components/SiteHeader.astro';
+import SiteFooter from '../components/SiteFooter.astro';
+import { shop } from '../config/shop';
+
+interface Props
+{
+    title: string;
+    description: string;
+    bookingPage?: boolean;
+}
+
+const { title, description, bookingPage = false } = Astro.props;
+---
+
+<!doctype html>
+<html lang="de-CH">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="theme-color" content="#080808" />
+        <link rel="icon" href="data:," />
+        <meta name="description" content={description} />
+        <meta name="robots" content="noindex, nofollow" />
+        <meta property="og:title" content={title} />
+        <meta property="og:description" content={description} />
+        <meta property="og:site_name" content={shop.name} />
+        <title>{title}</title>
+    </head>
+    <body class:list={{ 'booking-page': bookingPage }}>
+        <a class="skip-link" href="#inhalt">Zum Inhalt</a>
+        <SiteHeader bookingPage={bookingPage} />
+        <main id="inhalt" tabindex="-1">
+            <slot />
+        </main>
+        <SiteFooter />
+    </body>
+</html>

@@ -1,0 +1,231 @@
+---
+import Icon from './Icon.astro';
+import { shop } from '../config/shop';
+
+interface Props
+{
+    bookingPage: boolean;
+}
+
+const { bookingPage } = Astro.props;
+---
+
+<header class="site-header" data-site-header>
+    <div class="header-content layout-width">
+        <a class="brand" href="/" aria-label="Beko’s Barber Shop, Startseite">
+            {shop.logoPath && <img src={shop.logoPath} alt="" width="52" height="52" />}
+            <span class="brand-type" aria-hidden="true">
+                <strong>BEKO’S</strong>
+                <span>BARBER SHOP</span>
+            </span>
+        </a>
+        <button class="menu-toggle" type="button" aria-label="Menü öffnen" aria-expanded="false" aria-controls="site-navigation" data-menu-toggle hidden>
+            <Icon name="menu" class="menu-open-icon" />
+            <Icon name="close" class="menu-close-icon" />
+        </button>
+        <nav id="site-navigation" aria-label="Hauptnavigation" data-menu>
+            <a href="/#leistungen">Leistungen</a>
+            <a href="/#bewertungen">Bewertungen</a>
+            <a href="/#standort">Standort</a>
+            <a class="action nav-booking" href="/buchen/" aria-current={bookingPage ? 'page' : undefined}>Termin buchen</a>
+        </nav>
+    </div>
+</header>
+
+<script>
+    const header = document.querySelector<HTMLElement>('[data-site-header]');
+    const toggle = header?.querySelector<HTMLButtonElement>('[data-menu-toggle]');
+    const menu = header?.querySelector<HTMLElement>('[data-menu]');
+
+    if (header && toggle && menu)
+    {
+        const desktop = window.matchMedia('(min-width: 49rem)');
+
+        function closeMenu(): void
+        {
+            toggle?.setAttribute('aria-expanded', 'false');
+            toggle?.setAttribute('aria-label', 'Menü öffnen');
+        }
+
+        header.dataset.menuReady = '';
+        toggle.hidden = false;
+        toggle.addEventListener('click', () =>
+        {
+            if (toggle.getAttribute('aria-expanded') === 'true')
+            {
+                closeMenu();
+                return;
+            }
+
+            toggle.setAttribute('aria-expanded', 'true');
+            toggle.setAttribute('aria-label', 'Menü schliessen');
+        });
+
+        header.addEventListener('keydown', (event) =>
+        {
+            if (event.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true')
+            {
+                closeMenu();
+                toggle.focus();
+            }
+        });
+
+        menu.addEventListener('click', (event) =>
+        {
+            if (!(event.target instanceof Element))
+            {
+                return;
+            }
+
+            const link = event.target.closest<HTMLAnchorElement>('a');
+            if (!link || desktop.matches)
+            {
+                return;
+            }
+
+            closeMenu();
+            if (link.pathname === window.location.pathname && link.hash)
+            {
+                const section = document.getElementById(link.hash.slice(1));
+                section?.focus({ preventScroll: true });
+            }
+        });
+
+        desktop.addEventListener('change', closeMenu);
+    }
+</script>
+
+<style lang="scss">
+    .site-header {
+        position: relative;
+        z-index: 5;
+        border-bottom: 1px solid var(--line);
+        background: var(--background);
+    }
+
+    .header-content {
+        display: flex;
+        min-height: var(--header-height);
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .brand {
+        display: inline-flex;
+        min-height: 2.75rem;
+        align-items: center;
+        gap: .8rem;
+        text-decoration: none;
+    }
+
+    .brand img {
+        object-fit: contain;
+    }
+
+    .brand-type {
+        display: grid;
+        gap: .13rem;
+        padding-left: .65rem;
+        border-left: 2px solid var(--accent);
+        line-height: 1;
+    }
+
+    .brand-type strong {
+        font-family: var(--heading-font);
+        font-size: 1.85rem;
+        font-weight: 800;
+        letter-spacing: .035em;
+    }
+
+    .brand-type span {
+        font-size: .63rem;
+        font-weight: 700;
+        letter-spacing: .21em;
+    }
+
+    .menu-toggle {
+        display: grid;
+        width: 2.75rem;
+        min-height: 2.75rem;
+        place-items: center;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: transparent;
+    }
+
+    .menu-toggle:hover {
+        border-color: var(--control-line);
+    }
+
+    .menu-toggle :global(.icon) {
+        width: 1.45rem;
+        height: 1.45rem;
+    }
+
+    .menu-toggle :global(.menu-close-icon),
+    .menu-toggle[aria-expanded='true'] :global(.menu-open-icon) {
+        display: none;
+    }
+
+    .menu-toggle[aria-expanded='true'] :global(.menu-close-icon) {
+        display: block;
+    }
+
+    nav {
+        display: flex;
+        width: 100%;
+        flex-direction: column;
+        gap: .4rem;
+        padding: .55rem 0 1rem;
+        border-top: 1px solid var(--line);
+    }
+
+    [data-menu-ready] .menu-toggle[aria-expanded='false'] + nav {
+        display: none;
+    }
+
+    nav a:not(.action) {
+        display: flex;
+        min-height: 2.75rem;
+        align-items: center;
+        color: var(--text);
+        font-size: .94rem;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    nav a:not(.action):hover {
+        color: var(--accent-hover);
+    }
+
+    .nav-booking {
+        align-self: flex-start;
+    }
+
+    @media (min-width: 49rem) {
+        .header-content {
+            flex-wrap: nowrap;
+            gap: 1.5rem;
+        }
+
+        .menu-toggle {
+            display: none;
+        }
+
+        nav,
+        [data-menu-ready] .menu-toggle[aria-expanded='false'] + nav {
+            display: flex;
+            width: auto;
+            flex-direction: row;
+            align-items: center;
+            gap: clamp(1rem, 2.7vw, 2.65rem);
+            padding: 0;
+            border: 0;
+        }
+
+        .nav-booking {
+            align-self: center;
+        }
+    }
+</style>

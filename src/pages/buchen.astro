@@ -1,0 +1,567 @@
+---
+import Icon from '../components/Icon.astro';
+import { shop } from '../config/shop';
+import { SERVICES, formatPrice } from '../features/booking/domain/services';
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+    title="Termin buchen bei Bekim | Beko’s Barber Shop"
+    description="Leistung, Tag und Uhrzeit für einen Demo-Termin bei Bekim in St. Gallen wählen."
+    bookingPage
+>
+    <div class="booking layout-width" data-booking>
+        <header class="booking-intro">
+            <h1>Termin buchen</h1>
+            <p class="barber-label">Alle Termine bei {shop.barber}</p>
+            <address>
+                <Icon name="pin" />
+                <span>{shop.address}</span>
+            </address>
+        </header>
+
+        <div class="booking-grid">
+            <div class="steps">
+                <div data-step="selection">
+                    <noscript><p class="notice">Aktiviere JavaScript für die Buchungsdemo.</p></noscript>
+                    <fieldset class="service-options">
+                        <legend class="sr-only">Leistung wählen</legend>
+                        {SERVICES.map((service) => (
+                            <label class="service-option">
+                                <input class="service-radio sr-only" type="radio" name="service" value={service.id} disabled />
+                                <span class="service-row">
+                                    <span>
+                                        <span class="service-name">{service.name}</span>
+                                        <span class="service-duration">{service.durationMinutes} Min.</span>
+                                    </span>
+                                    <span class="service-price">{formatPrice(service.priceChf)}</span>
+                                    <Icon name="check" class="service-check" />
+                                </span>
+                            </label>
+                        ))}
+                    </fieldset>
+                    <section class="schedule" aria-labelledby="schedule-heading">
+                        <h2 id="schedule-heading"><Icon name="calendar" /> Freie Termine</h2>
+                        <p class="demo-label">Demo-Termine</p>
+                        <div class="day-grid" role="group" aria-label="Tag auswählen" data-days></div>
+                        <div class="time-grid" role="group" aria-label="Uhrzeit auswählen" data-times></div>
+                        <p class="schedule-status" role="status" data-schedule-status>Wähle zuerst eine Leistung.</p>
+                        <button class="text-action" type="button" data-next-day hidden>Nächster freier Tag</button>
+                    </section>
+                </div>
+
+                <section class="step-panel" data-step="contact" aria-labelledby="contact-heading" hidden>
+                    <h2 id="contact-heading" tabindex="-1">Kontaktdaten</h2>
+                    <p>Gib für diese Demobuchung einen Testnamen und eine Test-E-Mail-Adresse ein.</p>
+                    <form method="post" autocomplete="off" novalidate>
+                        <fieldset disabled>
+                            <legend class="sr-only">Test-Kontaktdaten</legend>
+                            <div class="field">
+                                <label for="demo-name">Name</label>
+                                <input id="demo-name" type="text" maxlength="100" aria-describedby="demo-name-error" required />
+                                <p class="field-error" id="demo-name-error" hidden></p>
+                            </div>
+                            <div class="field">
+                                <label for="demo-email">E-Mail-Adresse</label>
+                                <input id="demo-email" type="email" inputmode="email" maxlength="254" aria-describedby="demo-email-error" required />
+                                <p class="field-error" id="demo-email-error" hidden></p>
+                            </div>
+                            <div class="step-actions">
+                                <button class="action" type="submit">Demo abschliessen</button>
+                                <button class="text-action" type="button" data-back>Zurück zur Terminauswahl</button>
+                            </div>
+                        </fieldset>
+                    </form>
+                </section>
+
+                <section class="step-panel confirmation" data-step="confirmation" aria-labelledby="confirmation-heading" hidden>
+                    <Icon name="check" class="confirmed-icon" />
+                    <h2 id="confirmation-heading" tabindex="-1">Demo abgeschlossen</h2>
+                    <p>Deine Auswahl wurde simuliert. Reservierung und Nachrichtenversand sind erst im Livebetrieb möglich.</p>
+                    <dl class="confirmation-details">
+                        <div><dt>Leistung</dt><dd data-confirm-service></dd></div>
+                        <div><dt>Datum</dt><dd data-confirm-date></dd></div>
+                        <div><dt>Uhrzeit</dt><dd data-confirm-time></dd></div>
+                        <div><dt>Preis</dt><dd data-confirm-price></dd></div>
+                        <div><dt>Barber</dt><dd data-confirm-barber></dd></div>
+                        <div><dt>Adresse</dt><dd>{shop.address}</dd></div>
+                    </dl>
+                    <div class="step-actions">
+                        <a class="action" href="/buchen/">Neue Demobuchung</a>
+                        <a class="text-action" href="/">Zur Startseite</a>
+                    </div>
+                </section>
+            </div>
+
+            <aside class="summary" aria-label="Buchungszusammenfassung" data-summary>
+                <div class="summary-inner">
+                    <h2><Icon name="scissors" /> Dein Termin</h2>
+                    <div class="summary-selection" aria-live="polite" aria-atomic="true">
+                        <div class="summary-title">
+                            <strong data-summary-service>Leistung wählen</strong>
+                            <strong data-summary-price></strong>
+                        </div>
+                        <p class="summary-meta">
+                            <span data-summary-date>Tag wählen</span>
+                            <span data-summary-time>Zeit wählen</span>
+                            <span>Bei {shop.barber}</span>
+                        </p>
+                    </div>
+                    <button class="action summary-next" type="button" data-next disabled>Weiter</button>
+                </div>
+            </aside>
+        </div>
+    </div>
+</BaseLayout>
+
+<script>
+    import '../features/booking/bookingUi';
+</script>
+
+<style lang="scss">
+    .booking {
+        padding-block: clamp(1.55rem, 4.4vw, 3.15rem) 2.8rem;
+    }
+
+    .booking-intro {
+        margin-bottom: 1.35rem;
+    }
+
+    h1 {
+        font-size: clamp(3.15rem, 8vw, 5.25rem);
+    }
+
+    .barber-label {
+        display: inline-flex;
+        margin-top: .7rem;
+        padding: .23rem .65rem;
+        border-radius: .3rem;
+        background: var(--accent);
+        color: var(--on-accent);
+        font-size: clamp(1rem, 3.5vw, 1.22rem);
+        font-weight: 700;
+        line-height: 1.5;
+    }
+
+    .booking-intro address {
+        display: flex;
+        gap: .5rem;
+        align-items: flex-start;
+        margin-top: .55rem;
+        color: var(--text);
+        font-size: .95rem;
+    }
+
+    .booking-intro address :global(.icon),
+    .schedule h2 :global(.icon),
+    .summary h2 :global(.icon) {
+        color: var(--accent);
+    }
+
+    .booking-intro address :global(.icon) {
+        margin-top: .09rem;
+    }
+
+    .booking-grid {
+        display: grid;
+        gap: 1rem;
+    }
+
+    fieldset {
+        min-inline-size: 0;
+        margin: 0;
+        padding: 0;
+        border: 0;
+    }
+
+    .service-options {
+        border-top: 1px solid var(--line);
+    }
+
+    .service-option {
+        display: block;
+        position: relative;
+        cursor: pointer;
+    }
+
+    .service-row {
+        display: grid;
+        min-height: 3.48rem;
+        grid-template-columns: minmax(0, 1fr) auto 1.1rem;
+        align-items: center;
+        gap: .45rem;
+        padding: .47rem .54rem;
+        border-bottom: 1px solid var(--line);
+        transition: background-color 150ms ease;
+    }
+
+    .service-option:hover .service-row {
+        background: #101010;
+    }
+
+    .service-radio:checked + .service-row {
+        border-radius: .4rem;
+        background: var(--surface);
+        box-shadow: inset 2px 0 var(--accent);
+    }
+
+    .service-radio:focus-visible + .service-row {
+        position: relative;
+        z-index: 1;
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+    }
+
+    .service-name,
+    .service-duration {
+        display: block;
+    }
+
+    .service-name {
+        font-size: clamp(.94rem, 3.7vw, 1.07rem);
+        font-weight: 700;
+        line-height: 1.24;
+    }
+
+    .service-duration {
+        margin-top: .12rem;
+        color: var(--muted);
+        font-size: .875rem;
+        line-height: 1.25;
+    }
+
+    .service-price {
+        font-size: clamp(.91rem, 3.6vw, 1.06rem);
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+    }
+
+    .service-row :global(.service-check) {
+        width: 1.05rem;
+        height: 1.05rem;
+        visibility: hidden;
+        color: var(--accent);
+    }
+
+    .service-radio:checked + .service-row :global(.service-check) {
+        visibility: visible;
+    }
+
+    .schedule {
+        margin-top: 1.45rem;
+    }
+
+    .schedule h2 {
+        display: flex;
+        align-items: center;
+        gap: .55rem;
+        font-size: clamp(2.05rem, 5vw, 3rem);
+    }
+
+    .schedule h2 :global(.icon) {
+        width: 1.55rem;
+        height: 1.55rem;
+    }
+
+    .demo-label,
+    .schedule-status,
+    .notice {
+        margin-top: .35rem;
+        color: var(--muted);
+        font-size: .9rem;
+    }
+
+    .day-grid,
+    .time-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: clamp(.28rem, 1.55vw, .65rem);
+        margin-top: .8rem;
+    }
+
+    .time-grid:empty {
+        display: none;
+    }
+
+    .day-grid :global(button),
+    .time-grid :global(button) {
+        padding-inline: .1rem;
+        border: 1px solid var(--control-line);
+        border-radius: var(--radius);
+        background: var(--surface);
+        color: var(--text);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .day-grid :global(button) {
+        display: grid;
+        min-height: 3.4rem;
+        place-content: center;
+        gap: .05rem;
+        line-height: 1.2;
+    }
+
+    .day-grid :global(button strong) {
+        font-size: 1rem;
+    }
+
+    .day-grid :global(button span) {
+        color: var(--muted);
+        font-size: clamp(.75rem, 3vw, .875rem);
+    }
+
+    .day-grid :global(button:disabled) {
+        border-color: var(--line);
+        color: var(--muted);
+    }
+
+    .time-grid :global(button) {
+        min-height: 2.75rem;
+        font-size: clamp(.85rem, 3.45vw, 1.05rem);
+    }
+
+    .day-grid :global(button:hover:not(:disabled)),
+    .time-grid :global(button:hover) {
+        background: #22201e;
+    }
+
+    .day-grid :global(button[aria-pressed='true']),
+    .time-grid :global(button[aria-pressed='true']) {
+        border-color: var(--accent);
+        box-shadow: inset 0 0 0 1px var(--accent);
+        font-weight: 700;
+    }
+
+    .schedule-status {
+        margin-top: .7rem;
+    }
+
+    .summary {
+        position: fixed;
+        z-index: 4;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        padding: .68rem var(--gutter) calc(.68rem + env(safe-area-inset-bottom));
+        border-top: 1px solid var(--control-line);
+        background: var(--surface);
+        box-shadow: 0 -.45rem 1.25rem rgb(0 0 0 / .32);
+    }
+
+    .summary-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: .68rem;
+    }
+
+    .summary h2 {
+        display: none;
+    }
+
+    .summary-selection {
+        min-width: 0;
+    }
+
+    .summary-title,
+    .summary-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: .05rem .5rem;
+    }
+
+    .summary-title {
+        font-size: .92rem;
+        line-height: 1.3;
+    }
+
+    .summary-title strong:last-child {
+        color: var(--accent-hover);
+        white-space: nowrap;
+    }
+
+    .summary-meta {
+        margin-top: .23rem;
+        color: var(--muted);
+        font-size: .78rem;
+        line-height: 1.25;
+    }
+
+    .summary-meta span:not(:last-child)::after {
+        margin-left: .48rem;
+        color: var(--muted);
+        content: '·';
+    }
+
+    .summary-next {
+        flex: 0 0 auto;
+    }
+
+    .step-panel {
+        padding: 1.2rem;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+    }
+
+    .step-panel h2 {
+        font-size: clamp(2.25rem, 6vw, 3.3rem);
+    }
+
+    .step-panel h2:focus {
+        outline: none;
+    }
+
+    .step-panel > p {
+        margin-top: .7rem;
+        color: var(--muted);
+    }
+
+    .field {
+        display: grid;
+        gap: .32rem;
+        margin-top: 1.05rem;
+    }
+
+    .field label {
+        font-weight: 600;
+    }
+
+    .field input {
+        width: 100%;
+        min-height: 2.8rem;
+        padding: .45rem .65rem;
+        border: 1px solid var(--control-line);
+        border-radius: var(--radius);
+        background: var(--background);
+        color: var(--text);
+    }
+
+    .field input[aria-invalid='true'] {
+        border-color: var(--error);
+    }
+
+    .field-error {
+        color: var(--error);
+        font-size: .875rem;
+    }
+
+    .step-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .35rem 1.15rem;
+        margin-top: 1.15rem;
+    }
+
+    .confirmation {
+        max-width: 42rem;
+    }
+
+    .confirmation :global(.confirmed-icon) {
+        width: 2rem;
+        height: 2rem;
+        margin-bottom: .5rem;
+        color: var(--accent);
+    }
+
+    .confirmation-details {
+        margin-top: .95rem;
+        border-top: 1px solid var(--line);
+    }
+
+    .confirmation-details div {
+        display: grid;
+        grid-template-columns: minmax(4.25rem, 1fr) 2.2fr;
+        gap: .25rem .7rem;
+        padding: .52rem 0;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .confirmation-details dt {
+        color: var(--muted);
+    }
+
+    .confirmation-details dd {
+        font-weight: 600;
+    }
+
+    @media (max-width: 51.999rem) {
+        :global(.has-booking-dock) {
+            padding-bottom: var(--booking-dock-height, 6rem);
+        }
+
+        .steps :global(button),
+        .steps input {
+            scroll-margin-bottom: calc(var(--booking-dock-height, 6rem) + .75rem);
+        }
+    }
+
+    @media (min-width: 52rem) {
+        .booking-intro {
+            margin-bottom: 1.75rem;
+        }
+
+        .booking-grid {
+            grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
+            gap: clamp(1.5rem, 3.6vw, 3.4rem);
+        }
+
+        .service-row {
+            min-height: 3.65rem;
+            padding-inline: .7rem;
+        }
+
+        .summary {
+            position: sticky;
+            top: 1.2rem;
+            right: auto;
+            bottom: auto;
+            left: auto;
+            align-self: start;
+            padding: 1.15rem;
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            box-shadow: none;
+        }
+
+        .summary-inner {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: .9rem;
+        }
+
+        .summary h2 {
+            display: flex;
+            gap: .5rem;
+            align-items: center;
+            padding-bottom: .8rem;
+            border-bottom: 1px solid var(--line);
+            font-size: 2rem;
+        }
+
+        .summary-title {
+            justify-content: space-between;
+            font-size: 1rem;
+        }
+
+        .summary-meta {
+            margin-top: .5rem;
+            font-size: .86rem;
+        }
+
+        .summary-next {
+            width: 100%;
+        }
+
+        .booking-grid:has(.confirmation:not([hidden])) {
+            grid-template-columns: 1fr;
+        }
+
+        .step-panel {
+            padding: 1.5rem;
+        }
+    }
+</style>

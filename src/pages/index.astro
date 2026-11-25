@@ -1,0 +1,181 @@
+---
+import { Image } from 'astro:assets';
+import barberTools from '../assets/barber-tools.png';
+import Icon from '../components/Icon.astro';
+import LocationSection from '../components/LocationSection.astro';
+import ReviewSection from '../components/ReviewSection.astro';
+import ServicePriceList from '../components/ServicePriceList.astro';
+import { shop } from '../config/shop';
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+    title="Beko’s Barber Shop | Bekim in St. Gallen"
+    description="Preise, Standort und Terminbuchung bei Bekim. Beko’s Barber Shop an der Rorschacherstrasse 52 in St. Gallen."
+>
+    <section class="hero" aria-labelledby="home-heading">
+        <div class="hero-image">
+            <Image
+                src={barberTools}
+                alt=""
+                widths={[480, 768, 1024, 1536]}
+                sizes="(min-width: 832px) 73vw, 100vw"
+                format="webp"
+                quality={81}
+                loading="eager"
+                fetchpriority="high"
+            />
+        </div>
+        <div class="hero-content layout-width">
+            <h1 id="home-heading"><span>Beko’s</span> <span>Barber Shop</span></h1>
+            <p class="barber-name">Dein Barber: <strong>{shop.barber}</strong></p>
+            <address class="hero-address">
+                <Icon name="pin" />
+                <span>{shop.address}</span>
+            </address>
+            <div class="hero-actions">
+                <a class="action" href="/buchen/">Termin buchen</a>
+                <a class="text-action" href={shop.directionsUrl}>Route planen</a>
+            </div>
+        </div>
+    </section>
+    <div class="layout-width">
+        <ServicePriceList />
+        <ReviewSection />
+        <LocationSection />
+    </div>
+</BaseLayout>
+
+<style lang="scss">
+    .hero {
+        position: relative;
+        isolation: isolate;
+        display: grid;
+        min-height: 22.75rem;
+        align-items: end;
+        overflow: hidden;
+    }
+
+    .hero-image {
+        position: absolute;
+        z-index: -1;
+        inset: 0;
+    }
+
+    .hero-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 78% 49%;
+    }
+
+    .hero::after {
+        position: absolute;
+        z-index: -1;
+        inset: 0;
+        background:
+            linear-gradient(0deg, var(--background) 0%, rgb(8 8 8 / .91) 17%, rgb(8 8 8 / .2) 83%, transparent),
+            linear-gradient(90deg, rgb(8 8 8 / .86), rgb(8 8 8 / .22) 74%);
+        content: '';
+    }
+
+    .hero-content {
+        padding-block: 3.5rem 2rem;
+    }
+
+    h1 {
+        font-size: clamp(3.2rem, 13.2vw, 7.25rem);
+        letter-spacing: -.012em;
+        line-height: .87;
+        text-shadow: 0 3px 25px rgb(0 0 0 / .38);
+        text-transform: uppercase;
+    }
+
+    h1 span {
+        display: block;
+    }
+
+    h1::after {
+        display: block;
+        width: 4.75rem;
+        height: 4px;
+        margin-top: 1.15rem;
+        background: var(--accent);
+        content: '';
+    }
+
+    .barber-name {
+        margin-top: .85rem;
+        font-weight: 600;
+    }
+
+    .barber-name strong {
+        color: var(--accent-hover);
+    }
+
+    .hero-address {
+        display: flex;
+        align-items: flex-start;
+        gap: .55rem;
+        margin-top: .3rem;
+        font-size: clamp(.94rem, 2.4vw, 1.13rem);
+        font-weight: 600;
+    }
+
+    .hero-address :global(.icon) {
+        margin-top: .1rem;
+        color: var(--accent);
+    }
+
+    .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: .65rem 1rem;
+        margin-top: 1.15rem;
+    }
+
+    .hero-actions a {
+        letter-spacing: .035em;
+        text-transform: uppercase;
+    }
+
+    @media (min-width: 52rem) {
+        .hero {
+            min-height: 30.4rem;
+            align-items: center;
+        }
+
+        .hero-image {
+            left: 22%;
+        }
+
+        .hero-image img {
+            object-position: 60% 42%;
+        }
+
+        .hero::after {
+            background:
+                linear-gradient(90deg, var(--background) 7%, rgb(8 8 8 / .92) 28%, rgb(8 8 8 / .17) 76%, rgb(8 8 8 / .14)),
+                linear-gradient(0deg, var(--background), transparent 38%);
+        }
+
+        .hero-content {
+            padding-block: 3.2rem 3.6rem;
+        }
+
+        h1 {
+            font-size: clamp(5.8rem, 8vw, 7.25rem);
+        }
+
+        .hero-actions {
+            gap: 1.65rem;
+            margin-top: 1.35rem;
+        }
+
+        .hero-actions .action {
+            min-height: 3rem;
+            padding-inline: 1.5rem;
+        }
+    }
+</style>
