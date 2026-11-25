@@ -35,7 +35,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                 <span>{shop.address}</span>
             </address>
             <div class="hero-actions">
-                <a class="action" href={routes.booking}>Termin buchen</a>
+                <a class="action" href={shop.bookingUrl ?? routes.booking}>Termin buchen</a>
                 <a class="text-action" href={shop.directionsUrl}>Route planen</a>
             </div>
         </div>

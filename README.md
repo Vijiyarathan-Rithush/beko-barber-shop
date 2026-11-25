@@ -1,6 +1,6 @@
 # Beko’s Barber Shop
 
-Responsive Astro-Website für Beko’s Barber Shop in St. Gallen. Die Startseite zeigt Leistungen, Preise, Bewertungen und Standort. Auf `/buchen` lässt sich eine Buchung bei Bekim mit Testdaten durchspielen.
+Responsive Astro-Website für Beko’s Barber Shop in St. Gallen. Die Startseite zeigt Leistungen, Preise, Bewertungen und Standort. Die Website unterstützt Bekims bestehende Onlinebuchung über Shore und eine Buchungsdemo für die Vorschau.
 
 ## Lokal starten
 
@@ -27,6 +27,8 @@ Die Terminalausgabe zeigt die lokale Adresse. `npm run check` prüft Astro und T
 | Preise und Dauer | Den gemeinsamen Katalog in `src/features/booking/domain/services.ts` pflegen. |
 | Fotos | Das generierte Werkzeugmotiv und die gekennzeichnete Kartenillustration liegen in `src/assets/`. Link und Adresse für «Route planen» kommen aus den Shopdaten. |
 
-## Buchungsdemo
+## Onlinebuchung
 
-Die Buchung simuliert fünf Werktage und richtet die angezeigten Daten an `Europe/Zurich` aus. Ein Tag ist absichtlich ausgebucht. Die Leistung bestimmt, welche Zeitfenster lang genug sind. Test-Kontaktdaten bleiben im Formular und werden nach der Demo-Bestätigung geleert. Für Livebuchungen sind der aktive Anbieter und seine Schnittstelle sowie Bekims Verfügbarkeit zu bestätigen.
+Für einen Build mit echter Terminbuchung `PUBLIC_BOOKING_URL` aus `.env.example` in der Build-Umgebung setzen. Die Buchungslinks und die Adresse `/buchen/` führen dann zu Bekims Shore-Kalender. Auswahl, Kundendaten und Terminbestätigung werden bei Shore verarbeitet.
+
+Bei leerem `PUBLIC_BOOKING_URL` bleibt der Buchungsablauf eine Demo mit Testdaten und simulierten Zeiten in `Europe/Zurich`.

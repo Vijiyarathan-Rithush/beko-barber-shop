@@ -1,4 +1,4 @@
-function getReviewUrl(value: string | undefined): string | undefined
+function getHttpsUrl(value: string | undefined): string | undefined
 {
     if (!value)
     {
@@ -25,6 +25,14 @@ const streetAddress = 'Rorschacherstrasse 52';
 const locality = '9000 St. Gallen';
 const address = [streetAddress, locality].join(', ');
 const homePath = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
+const configuredBookingUrl = import.meta.env.PUBLIC_BOOKING_URL;
+const bookingUrl = getHttpsUrl(configuredBookingUrl);
+
+if (configuredBookingUrl && !bookingUrl)
+{
+    throw new Error('PUBLIC_BOOKING_URL must be a valid HTTPS URL without credentials.');
+}
+
 const directionsUrl = new URL('https://www.google.com/maps/dir/');
 directionsUrl.searchParams.set('api', '1');
 directionsUrl.searchParams.set('destination', address);
@@ -43,6 +51,7 @@ interface ShopConfig
     readonly address: string;
     readonly directionsUrl: string;
     readonly reviewUrl: string | undefined;
+    readonly bookingUrl: string | undefined;
     readonly logoPath: string;
     readonly openingHours: readonly string[];
     readonly phone: string;
@@ -56,7 +65,8 @@ export const shop: ShopConfig = {
     locality,
     address,
     directionsUrl: directionsUrl.href,
-    reviewUrl: getReviewUrl(import.meta.env.PUBLIC_REVIEW_URL),
+    reviewUrl: getHttpsUrl(import.meta.env.PUBLIC_REVIEW_URL),
+    bookingUrl,
     logoPath: homePath + 'beko-logo.png',
     openingHours: [],
     phone: '',

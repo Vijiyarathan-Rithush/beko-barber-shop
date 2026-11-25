@@ -27,7 +27,7 @@ const { bookingPage } = Astro.props;
             <a href={routes.home + '#leistungen'}>Leistungen</a>
             <a href={routes.home + '#bewertungen'}>Bewertungen</a>
             <a href={routes.home + '#standort'}>Standort</a>
-            <a class="action nav-booking" href={routes.booking} aria-current={bookingPage ? 'page' : undefined}>Termin buchen</a>
+            <a class="action nav-booking" href={shop.bookingUrl ?? routes.booking} aria-current={bookingPage ? 'page' : undefined}>Termin buchen</a>
         </nav>
     </div>
 </header>

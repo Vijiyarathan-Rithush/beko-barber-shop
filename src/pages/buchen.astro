@@ -3,6 +3,11 @@ import Icon from '../components/Icon.astro';
 import { routes, shop } from '../config/shop';
 import { SERVICES, formatPrice } from '../features/booking/domain/services';
 import BaseLayout from '../layouts/BaseLayout.astro';
+
+if (shop.bookingUrl)
+{
+    return Astro.redirect(shop.bookingUrl);
+}
 ---
 
 <BaseLayout
