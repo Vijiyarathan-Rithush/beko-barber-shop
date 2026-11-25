@@ -1,6 +1,6 @@
 ---
 import Icon from './Icon.astro';
-import { shop } from '../config/shop';
+import { routes, shop } from '../config/shop';
 
 interface Props
 {
@@ -12,8 +12,8 @@ const { bookingPage } = Astro.props;
 
 <header class="site-header" data-site-header>
     <div class="header-content layout-width">
-        <a class="brand" href="/" aria-label="Beko’s Barber Shop, Startseite">
-            {shop.logoPath && <img src={shop.logoPath} alt="" width="52" height="52" />}
+        <a class="brand" href={routes.home} aria-label="Beko’s Barber Shop, Startseite">
+            {shop.logoPath && <img src={shop.logoPath} alt="" width="56" height="56" />}
             <span class="brand-type" aria-hidden="true">
                 <strong>BEKO’S</strong>
                 <span>BARBER SHOP</span>
@@ -24,10 +24,10 @@ const { bookingPage } = Astro.props;
             <Icon name="close" class="menu-close-icon" />
         </button>
         <nav id="site-navigation" aria-label="Hauptnavigation" data-menu>
-            <a href="/#leistungen">Leistungen</a>
-            <a href="/#bewertungen">Bewertungen</a>
-            <a href="/#standort">Standort</a>
-            <a class="action nav-booking" href="/buchen/" aria-current={bookingPage ? 'page' : undefined}>Termin buchen</a>
+            <a href={routes.home + '#leistungen'}>Leistungen</a>
+            <a href={routes.home + '#bewertungen'}>Bewertungen</a>
+            <a href={routes.home + '#standort'}>Standort</a>
+            <a class="action nav-booking" href={routes.booking} aria-current={bookingPage ? 'page' : undefined}>Termin buchen</a>
         </nav>
     </div>
 </header>
@@ -121,6 +121,7 @@ const { bookingPage } = Astro.props;
 
     .brand img {
         object-fit: contain;
+        mix-blend-mode: lighten;
     }
 
     .brand-type {
@@ -129,6 +130,10 @@ const { bookingPage } = Astro.props;
         padding-left: .65rem;
         border-left: 2px solid var(--accent);
         line-height: 1;
+    }
+
+    .brand img + .brand-type {
+        border-left: 1px solid var(--control-line);
     }
 
     .brand-type strong {

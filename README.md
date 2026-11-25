@@ -13,12 +13,16 @@ npm run dev
 
 Die Terminalausgabe zeigt die lokale Adresse. `npm run check` prüft Astro und TypeScript. `npm run build` erzeugt die statische Website in `dist/`. `npm run preview` zeigt den Produktionsbuild lokal.
 
+## GitHub Pages
+
+`npm run build:pages` baut die statische Demo mit den Pfaden für das Pages-Repo und schreibt sie nach `dist-pages/`. Der Branch `main` im Pages-Repo enthält den Inhalt dieses Ordners. [Pages-Repo](https://github.com/Vijiyarathan-Rithush/beko-barber-shop-pages)
+
 ## Shopdaten pflegen
 
 | Angabe | Einrichtung |
 |---|---|
 | Bewertungsformular | `.env.example` als `.env` kopieren und `PUBLIC_REVIEW_URL` auf Bekims bestätigten HTTPS-Link setzen. Astro liest den Wert beim Start oder Build. |
-| Original-Logo | Die freigegebene Datei in `public/` ablegen und `logoPath` in `src/config/shop.ts` mit ihrem Website-Pfad befüllen. Bis dahin erscheint der Shopname als Schriftzug. |
+| Original-Logo | Die Datei liegt in `public/beko-logo.png`. `logoPath` in `src/config/shop.ts` verweist darauf. |
 | Öffnungszeiten und Kontakt | `openingHours`, `phone` und `instagramUrl` in `src/config/shop.ts` ergänzen. |
 | Preise und Dauer | Den gemeinsamen Katalog in `src/features/booking/domain/services.ts` pflegen. |
 | Fotos | Das generierte Werkzeugmotiv und die gekennzeichnete Kartenillustration liegen in `src/assets/`. Link und Adresse für «Route planen» kommen aus den Shopdaten. |

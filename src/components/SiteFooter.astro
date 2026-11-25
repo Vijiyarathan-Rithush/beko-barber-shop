@@ -1,11 +1,11 @@
 ---
-import { shop } from '../config/shop';
+import { routes, shop } from '../config/shop';
 ---
 
 <footer class="site-footer">
     <div class="layout-width footer-content">
         <div>
-            <a class="footer-brand" href="/">{shop.name}</a>
+            <a class="footer-brand" href={routes.home}>{shop.name}</a>
             <address>{shop.address}</address>
         </div>
         <div class="footer-links">

@@ -1,5 +1,6 @@
 ---
 import Icon from './Icon.astro';
+import { routes } from '../config/shop';
 import { SERVICES, formatPrice } from '../features/booking/domain/services';
 
 const featuredIds = ['haircut', 'haircut-and-beard', 'beard'];
@@ -12,14 +13,14 @@ const featuredServices = SERVICES.filter((service) => featuredIds.includes(servi
         <ul>
             {featuredServices.map((service) => (
                 <li>
-                    <a href={'/buchen/?service=' + service.id}>
+                    <a href={routes.booking + '?service=' + service.id}>
                         <span>{service.name}</span>
                         <span class="price">{formatPrice(service.priceChf)}</span>
                     </a>
                 </li>
             ))}
         </ul>
-        <a class="text-action all-services" href="/buchen/">
+        <a class="text-action all-services" href={routes.booking}>
             Alle Leistungen
             <Icon name="chevron" />
         </a>

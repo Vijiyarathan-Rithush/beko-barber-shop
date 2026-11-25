@@ -1,6 +1,6 @@
 ---
 import Icon from '../components/Icon.astro';
-import { shop } from '../config/shop';
+import { routes, shop } from '../config/shop';
 import { SERVICES, formatPrice } from '../features/booking/domain/services';
 import BaseLayout from '../layouts/BaseLayout.astro';
 ---
@@ -87,8 +87,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                         <div><dt>Adresse</dt><dd>{shop.address}</dd></div>
                     </dl>
                     <div class="step-actions">
-                        <a class="action" href="/buchen/">Neue Demobuchung</a>
-                        <a class="text-action" href="/">Zur Startseite</a>
+                        <a class="action" href={routes.booking}>Neue Demobuchung</a>
+                        <a class="text-action" href={routes.home}>Zur Startseite</a>
                     </div>
                 </section>
             </div>

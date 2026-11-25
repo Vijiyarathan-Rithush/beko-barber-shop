@@ -24,9 +24,15 @@ function getReviewUrl(value: string | undefined): string | undefined
 const streetAddress = 'Rorschacherstrasse 52';
 const locality = '9000 St. Gallen';
 const address = [streetAddress, locality].join(', ');
+const homePath = import.meta.env.BASE_URL.replace(/\/+$/, '') + '/';
 const directionsUrl = new URL('https://www.google.com/maps/dir/');
 directionsUrl.searchParams.set('api', '1');
 directionsUrl.searchParams.set('destination', address);
+
+export const routes = {
+    home: homePath,
+    booking: homePath + 'buchen/'
+} as const;
 
 interface ShopConfig
 {
@@ -51,7 +57,7 @@ export const shop: ShopConfig = {
     address,
     directionsUrl: directionsUrl.href,
     reviewUrl: getReviewUrl(import.meta.env.PUBLIC_REVIEW_URL),
-    logoPath: '',
+    logoPath: homePath + 'beko-logo.png',
     openingHours: [],
     phone: '',
     instagramUrl: ''

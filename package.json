@@ -11,6 +11,7 @@
         "dev": "astro dev",
         "check": "astro check",
         "build": "astro build",
+        "build:pages": "astro build --config astro.pages.config.mjs",
         "preview": "astro preview"
     },
     "dependencies": {
