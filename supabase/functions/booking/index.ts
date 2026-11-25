@@ -1,6 +1,7 @@
 import { matchesSecret, secretFingerprint } from '../_shared/authorization.ts';
 import { BOOKING_ID_PATTERN } from '../_shared/booking.ts';
 import { bookingJson, handleBookingRequest, readBookingJson } from '../_shared/bookingHttp.ts';
+import { authenticateStaff, staffAccounts } from './supabaseAccess.ts';
 import { bookingDatabase } from './store.ts';
 
 async function handleManagement(request: Request, store: ReturnType<typeof bookingDatabase>): Promise<Response>
@@ -25,16 +26,47 @@ async function handleManagement(request: Request, store: ReturnType<typeof booki
     return new Response(null, { status: 204, headers: { 'Cache-Control': 'no-store' } });
 }
 
-Deno.serve(async (request) =>
+async function handleStaff(request: Request, action: string): Promise<Response>
 {
-    const received = request.headers.get('x-beko-backend-token') ?? '';
-    if (received.length < 32 || received.length > 256)
+    const account = await authenticateStaff(request);
+    if (!account)
     {
         return bookingJson({ error: 'Zugriff verweigert' }, 401);
     }
 
+    if (action === 'management')
+    {
+        return handleManagement(request, bookingDatabase());
+    }
+
+    if (account.role !== 'admin')
+    {
+        return bookingJson({ error: 'Zugriff verweigert' }, 403);
+    }
+    if (request.method !== 'GET')
+    {
+        return new Response(null, { status: 405, headers: { Allow: 'GET' } });
+    }
+
+    return bookingJson(await staffAccounts());
+}
+
+Deno.serve(async (request) =>
+{
     try
     {
+        const action = new URL(request.url).searchParams.get('action');
+        if (action === 'management' || action === 'staff-accounts')
+        {
+            return await handleStaff(request, action);
+        }
+
+        const received = request.headers.get('x-beko-backend-token') ?? '';
+        if (received.length < 32 || received.length > 256)
+        {
+            return bookingJson({ error: 'Zugriff verweigert' }, 401);
+        }
+
         const store = bookingDatabase();
         const expected = Deno.env.get('BOOKING_BACKEND_TOKEN');
         const authorized = expected
@@ -43,11 +75,6 @@ Deno.serve(async (request) =>
         if (!authorized)
         {
             return bookingJson({ error: 'Zugriff verweigert' }, 401);
-        }
-
-        if (new URL(request.url).searchParams.get('action') === 'management')
-        {
-            return await handleManagement(request, store);
         }
 
         return await handleBookingRequest(request, store);

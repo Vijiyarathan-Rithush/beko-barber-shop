@@ -2,6 +2,8 @@
 import { matchesSecret } from '../../../../supabase/functions/_shared/authorization';
 import { BOOKING_ID_PATTERN, type BookingRow } from '../../../../supabase/functions/_shared/booking';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
+import BookingList from './BookingList.astro';
+import { cancelBooking, upcomingBookings } from './bookingStore';
 
 const password = process.env.BOOKING_ADMIN_PASSWORD;
 const auth = Astro.request.headers.get('authorization') ?? '';
@@ -20,8 +22,6 @@ if (!password || !auth.startsWith('Basic ') || !matchesSecret(supplied, 'bekim:'
     });
 }
 
-const useSupabase = typeof __BEKO_SUPABASE_BACKEND__ !== 'undefined' && __BEKO_SUPABASE_BACKEND__;
-const store = useSupabase ? await import('./supabaseGateway') : await import('./bookingStore');
 let bookings: BookingRow[];
 
 try
@@ -40,11 +40,11 @@ try
             return new Response('Ungültiger Termin', { status: 400, headers: { 'Cache-Control': 'no-store' } });
         }
 
-        await store.cancelBooking(id);
+        cancelBooking(id);
         return Astro.redirect(Astro.url.pathname, 303);
     }
 
-    bookings = await store.upcomingBookings();
+    bookings = upcomingBookings();
 }
 catch
 {
@@ -54,51 +54,16 @@ catch
     });
 }
 
-const date = new Intl.DateTimeFormat('de-CH', {
-    timeZone: 'Europe/Zurich',
-    dateStyle: 'medium',
-    timeStyle: 'short'
-});
 ---
 
 <BaseLayout title="Bekims Termine | Beko’s Barber Shop" description="Terminverwaltung für Bekim.">
     <section class="layout-width management">
         <h1>Bekims Termine</h1>
-        {bookings.length ? (
-            <ul>
-                {bookings.map((booking) => (
-                    <li>
-                        <div>
-                            <h2>{booking.service}</h2>
-                            <p>{date.format(booking.startsAt)} · CHF {booking.priceChf}</p>
-                            <p>{booking.name} · {booking.email}</p>
-                        </div>
-                        <form method="post">
-                            <input type="hidden" name="id" value={booking.id} />
-                            <button class="action action--outline" type="submit">Termin stornieren</button>
-                        </form>
-                    </li>
-                ))}
-            </ul>
-        ) : (
-            <p>Es gibt keine kommenden Termine.</p>
-        )}
+        <BookingList {bookings} />
     </section>
 </BaseLayout>
 
 <style lang="scss">
     .management { padding-block: 2rem; }
     h1 { font-size: clamp(2.25rem, 5vw, 3.5rem); margin-bottom: 1rem; }
-    ul { list-style: none; margin: 0; padding: 0; }
-    li {
-        display: flex;
-        flex-wrap: wrap;
-        gap: .8rem 1.5rem;
-        align-items: center;
-        justify-content: space-between;
-        padding-block: 1rem;
-        border-bottom: 1px solid var(--line);
-    }
-    h2 { font-size: 1.7rem; margin-bottom: .3rem; }
-    p { overflow-wrap: anywhere; }
 </style>

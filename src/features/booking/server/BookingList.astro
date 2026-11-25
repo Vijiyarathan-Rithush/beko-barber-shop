@@ -1,0 +1,45 @@
+---
+import type { BookingRow } from '../../../../supabase/functions/_shared/booking';
+
+interface Props { bookings: BookingRow[] }
+
+const { bookings } = Astro.props;
+const date = new Intl.DateTimeFormat('de-CH', {
+    timeZone: 'Europe/Zurich',
+    dateStyle: 'medium',
+    timeStyle: 'short'
+});
+---
+
+{bookings.length ? (
+    <ul>
+        {bookings.map((booking) => (
+            <li>
+                <div>
+                    <h2>{booking.service}</h2>
+                    <p>{date.format(booking.startsAt)} · CHF {booking.priceChf}</p>
+                    <p>{booking.name} · {booking.email}</p>
+                </div>
+                <form method="post">
+                    <input type="hidden" name="id" value={booking.id} />
+                    <button class="action action--outline" type="submit">Termin stornieren</button>
+                </form>
+            </li>
+        ))}
+    </ul>
+) : <p>Es gibt keine kommenden Termine.</p>}
+
+<style lang="scss">
+    ul { list-style: none; margin: 0; padding: 0; }
+    li {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .8rem 1.5rem;
+        align-items: center;
+        justify-content: space-between;
+        padding-block: 1rem;
+        border-bottom: 1px solid var(--line);
+    }
+    h2 { font-size: 1.7rem; margin-bottom: .3rem; }
+    p { overflow-wrap: anywhere; }
+</style>

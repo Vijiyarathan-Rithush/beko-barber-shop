@@ -1,22 +1,10 @@
 import { hashBooking, type BookingRequest, type BookingRow } from '../_shared/booking.ts';
 import { getBookingTime, type TimeRange } from '../_shared/calendar.ts';
+import { supabaseService } from './supabaseAccess.ts';
 
 export function bookingDatabase()
 {
-    const project = Deno.env.get('SUPABASE_URL');
-    const legacy = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    const secretKeys = JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS') || '{}') as Record<string, string>;
-    const key = secretKeys.default || legacy;
-    if (!project || !key)
-    {
-        throw new Error('The Supabase Data API is not configured.');
-    }
-
-    const headers = new Headers({ apikey: key, 'Content-Type': 'application/json' });
-    if (!secretKeys.default)
-    {
-        headers.set('Authorization', 'Bearer ' + key);
-    }
+    const { project, headers } = supabaseService();
 
     async function dataRequest(resource: string, parameters: Record<string, string>, init?: RequestInit): Promise<Response>
     {

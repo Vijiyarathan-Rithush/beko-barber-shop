@@ -1,4 +1,4 @@
-export default function bookingRoutes(endpoint)
+export default function bookingRoutes(endpoint, localManagement = true)
 {
     const directory = new URL('./src/features/booking/server/', import.meta.url);
     return {
@@ -11,11 +11,14 @@ export default function bookingRoutes(endpoint)
                     entrypoint: new URL(endpoint, directory),
                     prerender: false
                 });
-                injectRoute({
-                    pattern: '/verwaltung/',
-                    entrypoint: new URL('Management.astro', directory),
-                    prerender: false
-                });
+                if (localManagement)
+                {
+                    injectRoute({
+                        pattern: '/verwaltung/',
+                        entrypoint: new URL('Management.astro', directory),
+                        prerender: false
+                    });
+                }
             }
         }
     };

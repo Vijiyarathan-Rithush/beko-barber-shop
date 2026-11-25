@@ -68,8 +68,11 @@ Die Supabase Edge Function `booking` verwendet PostgreSQL für Termine und sperr
 | --- | --- |
 | `BOOKING_BACKEND_URL` | Die HTTPS-URL der bereitgestellten Function `booking` |
 | `BOOKING_BACKEND_TOKEN` | Derselbe geheime Wert wie in Supabase |
-| `BOOKING_ADMIN_PASSWORD` | Ein eigenes Passwort für die Anmeldung als `bekim` |
+| `SUPABASE_URL` | Die Projekt-URL für den Mitarbeiter-Login |
+| `SUPABASE_PUBLISHABLE_KEY` | Der Publishable Key für Supabase Auth |
 
 Bei einer Einrichtung ohne Zugriff auf die Supabase-Secrets kann ein zufälliger Token mit 32 Byte in Vercel gespeichert werden. Trage den SHA-256-Fingerabdruck als 64 Hex-Zeichen in `public.beko_backend_access.token_sha256` ein. Die Function nutzt den Eintrag, wenn in Supabase kein `BOOKING_BACKEND_TOKEN` gesetzt ist.
 
 Die Website läuft als Demo, solange `BOOKING_BACKEND_URL` oder `BOOKING_BACKEND_TOKEN` im Vercel-Build fehlen. Verwende für die Abnahme eine separate Supabase-Umgebung mit Testdaten. Trage vor dem Aktivieren der Produktionsvariablen Bekims Öffnungszeiten in `supabase/functions/_shared/bookingHours.ts` ein und stelle die Funktion neu bereit. Die Migration legt eine neue Buchungstabelle an. Bestehende produktive SQLite-Termine müssten bei einem späteren Umzug separat übertragen werden.
+
+Der Mitarbeiter-Login ist unter `/verwaltung/anmelden/` erreichbar. Ein autorisierter Supabase-Administrator legt die Konten an und setzt `beko_role` in den App-Metadaten auf `staff` für Bekim oder `admin` für den Admin-Zugang. Der Adminbereich unter `/verwaltung/admin/` zeigt die zugewiesenen Konten. Die Terminverwaltung prüft die Rolle bei jedem Aufruf. Einladungen lassen sich mit `generateLink({ type: 'invite', email })` erzeugen. Zum Einrichten des Passworts wird der einmalige `hashed_token` als Fragment `#einladung=...` an `/verwaltung/passwort-waehlen/` übergeben.
