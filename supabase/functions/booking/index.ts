@@ -1,4 +1,4 @@
-import { matchesSecret } from '../_shared/authorization.ts';
+import { matchesSecret, secretFingerprint } from '../_shared/authorization.ts';
 import { BOOKING_ID_PATTERN } from '../_shared/booking.ts';
 import { bookingJson, handleBookingRequest, readBookingJson } from '../_shared/bookingHttp.ts';
 import { bookingDatabase } from './store.ts';
@@ -27,9 +27,8 @@ async function handleManagement(request: Request, store: ReturnType<typeof booki
 
 Deno.serve(async (request) =>
 {
-    const expected = Deno.env.get('BOOKING_BACKEND_TOKEN');
     const received = request.headers.get('x-beko-backend-token') ?? '';
-    if (!expected || expected.length < 32 || !matchesSecret(received, expected))
+    if (received.length < 32 || received.length > 256)
     {
         return bookingJson({ error: 'Zugriff verweigert' }, 401);
     }
@@ -37,6 +36,15 @@ Deno.serve(async (request) =>
     try
     {
         const store = bookingDatabase();
+        const expected = Deno.env.get('BOOKING_BACKEND_TOKEN');
+        const authorized = expected
+            ? matchesSecret(received, expected)
+            : matchesSecret(secretFingerprint(received), await store.backendTokenFingerprint());
+        if (!authorized)
+        {
+            return bookingJson({ error: 'Zugriff verweigert' }, 401);
+        }
+
         if (new URL(request.url).searchParams.get('action') === 'management')
         {
             return await handleManagement(request, store);

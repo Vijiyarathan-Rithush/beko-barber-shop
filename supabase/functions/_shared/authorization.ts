@@ -1,7 +1,16 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 
+function hashSecret(value: string)
+{
+    return createHash('sha256').update(value).digest();
+}
+
 export function matchesSecret(actual: string, expected: string): boolean
 {
-    const hash = (value: string) => createHash('sha256').update(value).digest();
-    return timingSafeEqual(hash(actual), hash(expected));
+    return timingSafeEqual(hashSecret(actual), hashSecret(expected));
+}
+
+export function secretFingerprint(value: string): string
+{
+    return hashSecret(value).toString('hex');
 }

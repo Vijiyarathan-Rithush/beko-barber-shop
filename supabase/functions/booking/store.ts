@@ -32,6 +32,13 @@ export function bookingDatabase()
     }
 
     return {
+        async backendTokenFingerprint(): Promise<string>
+        {
+            const response = await dataRequest('beko_backend_access', { select: 'token_sha256', singleton: 'eq.true' });
+            const [access] = await response.json() as Array<{ token_sha256: string }>;
+            return access?.token_sha256 ?? '';
+        },
+
         async busyTimes(now: number): Promise<TimeRange[]>
         {
             const response = await dataRequest('beko_bookings', {
