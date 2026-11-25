@@ -1,0 +1,5 @@
+project_id = "beko-barber-shop"
+
+[functions.booking]
+# The function verifies the dedicated server-to-server token before accessing data.
+verify_jwt = false

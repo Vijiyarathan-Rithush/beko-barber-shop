@@ -7,6 +7,7 @@
     "exclude": [
         "dist",
         "dist-pages",
-        "dist-booking"
+        "dist-booking",
+        "supabase/functions/booking"
     ]
 }

@@ -1,7 +1,7 @@
 ---
 import Icon from './Icon.astro';
 import { routes } from '../config/shop';
-import { SERVICES, formatPrice } from '../features/booking/domain/services';
+import { SERVICES, formatPrice } from '../../supabase/functions/_shared/services';
 
 const featuredIds = ['haircut', 'haircut-and-beard', 'beard'];
 const featuredServices = SERVICES.filter((service) => featuredIds.includes(service.id));

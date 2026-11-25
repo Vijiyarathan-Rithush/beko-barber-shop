@@ -1,4 +1,4 @@
-import { createBookingDay, type BookingDay, type Opening } from '../domain/availability';
+import { createBookingDay, type BookingDay, type Opening } from '../../../../supabase/functions/_shared/availability';
 
 const OPENINGS: readonly (readonly Opening[])[] = [
     [['09:30', 20], ['10:10', 40], ['10:50', 20], ['11:30', 35], ['13:00', 30]],

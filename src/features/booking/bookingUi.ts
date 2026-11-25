@@ -1,7 +1,7 @@
 import { shop } from '../../config/shop';
 import { BookingSelection } from './application/BookingSelection';
-import type { BookingDay } from './domain/availability';
-import { findService, formatPrice } from './domain/services';
+import type { BookingDay } from '../../../supabase/functions/_shared/availability';
+import { findService, formatPrice } from '../../../supabase/functions/_shared/services';
 import { createDemoCalendar } from './infrastructure/demoCalendar';
 
 const view = document.querySelector<HTMLElement>('[data-booking]');

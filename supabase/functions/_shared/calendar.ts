@@ -1,6 +1,6 @@
 import { Temporal } from '@js-temporal/polyfill';
-import { BOOKING_HOURS, CLOSED_DATES } from '../../../config/bookingHours';
-import { createBookingDay, type BookingDay, type Opening } from '../domain/availability';
+import { BOOKING_HOURS, CLOSED_DATES } from './bookingHours.ts';
+import { createBookingDay, type BookingDay, type Opening } from './availability.ts';
 
 export interface TimeRange
 {

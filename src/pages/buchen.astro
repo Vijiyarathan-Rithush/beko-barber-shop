@@ -1,7 +1,7 @@
 ---
 import Icon from '../components/Icon.astro';
 import { routes, shop } from '../config/shop';
-import { SERVICES, formatPrice } from '../features/booking/domain/services';
+import { SERVICES, formatPrice } from '../../supabase/functions/_shared/services';
 import BaseLayout from '../layouts/BaseLayout.astro';
 
 const liveBooking = typeof __BEKO_LIVE_BOOKING__ !== 'undefined' && __BEKO_LIVE_BOOKING__;

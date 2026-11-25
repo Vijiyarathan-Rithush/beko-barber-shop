@@ -1,16 +1,15 @@
 ---
-import { createHash, timingSafeEqual } from 'node:crypto';
+import { matchesSecret } from '../../../../supabase/functions/_shared/authorization';
+import { BOOKING_ID_PATTERN, type BookingRow } from '../../../../supabase/functions/_shared/booking';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import { cancelBooking, upcomingBookings } from './bookingStore';
 
 const password = process.env.BOOKING_ADMIN_PASSWORD;
 const auth = Astro.request.headers.get('authorization') ?? '';
 const supplied = Buffer.from(auth.slice(6), 'base64').toString('utf8');
-const hash = (value: string) => createHash('sha256').update(value).digest();
 
 Astro.response.headers.set('Cache-Control', 'private, no-store');
 
-if (!password || !auth.startsWith('Basic ') || !timingSafeEqual(hash(supplied), hash('bekim:' + password)))
+if (!password || !auth.startsWith('Basic ') || !matchesSecret(supplied, 'bekim:' + password))
 {
     return new Response('Anmeldung erforderlich', {
         status: 401,
@@ -21,25 +20,40 @@ if (!password || !auth.startsWith('Basic ') || !timingSafeEqual(hash(supplied), 
     });
 }
 
-if (Astro.request.method === 'POST')
+const useSupabase = typeof __BEKO_SUPABASE_BACKEND__ !== 'undefined' && __BEKO_SUPABASE_BACKEND__;
+const store = useSupabase ? await import('./supabaseGateway') : await import('./bookingStore');
+let bookings: BookingRow[];
+
+try
 {
-    if (Astro.request.headers.get('origin') !== Astro.url.origin)
+    if (Astro.request.method === 'POST')
     {
-        return new Response('Ungültiger Ursprung', { status: 403, headers: { 'Cache-Control': 'no-store' } });
+        if (Astro.request.headers.get('origin') !== Astro.url.origin)
+        {
+            return new Response('Ungültiger Ursprung', { status: 403, headers: { 'Cache-Control': 'no-store' } });
+        }
+
+        const fields = await Astro.request.formData().catch(() => undefined);
+        const id = fields?.get('id');
+        if (typeof id !== 'string' || !BOOKING_ID_PATTERN.test(id))
+        {
+            return new Response('Ungültiger Termin', { status: 400, headers: { 'Cache-Control': 'no-store' } });
+        }
+
+        await store.cancelBooking(id);
+        return Astro.redirect(Astro.url.pathname, 303);
     }
 
-    const fields = await Astro.request.formData();
-    const id = fields.get('id');
-    if (typeof id !== 'string' || !/^[a-f0-9-]{36}$/.test(id))
-    {
-        return new Response('Ungültiger Termin', { status: 400, headers: { 'Cache-Control': 'no-store' } });
-    }
-
-    cancelBooking(id);
-    return Astro.redirect(Astro.url.pathname, 303);
+    bookings = await store.upcomingBookings();
+}
+catch
+{
+    return new Response('Die Terminverwaltung ist vorübergehend nicht verfügbar.', {
+        status: 503,
+        headers: { 'Cache-Control': 'private, no-store' }
+    });
 }
 
-const bookings = upcomingBookings();
 const date = new Intl.DateTimeFormat('de-CH', {
     timeZone: 'Europe/Zurich',
     dateStyle: 'medium',

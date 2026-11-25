@@ -1,28 +1,9 @@
-import { createHash, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { getBookingTime, type TimeRange } from './calendar';
-import type { Service } from '../domain/services';
-
-export interface BookingRequest
-{
-    readonly requestId: string;
-    readonly service: Service;
-    readonly date: string;
-    readonly time: string;
-    readonly name: string;
-    readonly email: string;
-}
-
-interface BookingRow extends TimeRange
-{
-    readonly id: string;
-    readonly service: string;
-    readonly priceChf: number;
-    readonly name: string;
-    readonly email: string;
-}
+import { hashBooking, type BookingRequest, type BookingRow } from '../../../../supabase/functions/_shared/booking';
+import { getBookingTime, type TimeRange } from '../../../../supabase/functions/_shared/calendar';
 
 let connection: DatabaseSync | undefined;
 
@@ -78,8 +59,7 @@ export function busyTimes(now: number): TimeRange[]
 export function book(request: BookingRequest): string | undefined
 {
     const db = database();
-    const { service, date, time, name, email } = request;
-    const requestHash = createHash('sha256').update(JSON.stringify([service.id, date, time, name, email])).digest('hex');
+    const requestHash = hashBooking(request);
     db.exec('BEGIN IMMEDIATE');
     try
     {

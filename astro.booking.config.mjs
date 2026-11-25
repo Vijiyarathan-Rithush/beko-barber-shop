@@ -1,6 +1,7 @@
 import node from '@astrojs/node';
 import { defineConfig } from 'astro/config';
 import websiteConfig from './astro.config.mjs';
+import bookingRoutes from './astro.booking-routes.mjs';
 
 const allowedDomains = [
     { hostname: 'localhost', protocol: 'http' },
@@ -28,22 +29,5 @@ export default defineConfig({
     vite: {
         define: { __BEKO_LIVE_BOOKING__: 'true' }
     },
-    integrations: [{
-        name: 'beko-booking-routes',
-        hooks: {
-            'astro:config:setup': ({ injectRoute }) =>
-            {
-                injectRoute({
-                    pattern: '/api/bookings',
-                    entrypoint: new URL('./src/features/booking/server/bookingEndpoint.ts', import.meta.url),
-                    prerender: false
-                });
-                injectRoute({
-                    pattern: '/verwaltung/',
-                    entrypoint: new URL('./src/features/booking/server/Management.astro', import.meta.url),
-                    prerender: false
-                });
-            }
-        }
-    }]
+    integrations: [bookingRoutes('bookingEndpoint.ts')]
 });
