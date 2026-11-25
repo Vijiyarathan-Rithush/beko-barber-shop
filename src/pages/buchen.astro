@@ -3,14 +3,16 @@ import Icon from '../components/Icon.astro';
 import { routes, shop } from '../config/shop';
 import { SERVICES, formatPrice } from '../features/booking/domain/services';
 import BaseLayout from '../layouts/BaseLayout.astro';
+
+const liveBooking = typeof __BEKO_LIVE_BOOKING__ !== 'undefined' && __BEKO_LIVE_BOOKING__;
 ---
 
 <BaseLayout
     title="Termin buchen bei Bekim | Beko’s Barber Shop"
-    description="Leistung, Tag und Uhrzeit für einen Demo-Termin bei Bekim in St. Gallen wählen."
+    description="Leistung, Tag und Uhrzeit für einen Termin bei Bekim in St. Gallen wählen."
     bookingPage
 >
-    <div class="booking layout-width" data-booking>
+    <div class="booking layout-width" data-booking data-booking-api={liveBooking ? routes.home + 'api/bookings' : undefined}>
         <header class="booking-intro">
             <h1>Termin buchen</h1>
             <p class="barber-label">Alle Termine bei {shop.barber}</p>
@@ -19,11 +21,12 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                 <span>{shop.address}</span>
             </address>
         </header>
+        <p class="booking-status" data-booking-status role="status" hidden></p>
 
         <div class="booking-grid">
             <div class="steps">
                 <div data-step="selection">
-                    <noscript><p class="notice">Aktiviere JavaScript für die Buchungsdemo.</p></noscript>
+                    <noscript><p class="notice">Aktiviere JavaScript für die Terminbuchung.</p></noscript>
                     <fieldset class="service-options">
                         <legend class="sr-only">Leistung wählen</legend>
                         {SERVICES.map((service) => (
@@ -42,7 +45,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                     </fieldset>
                     <section class="schedule" aria-labelledby="schedule-heading">
                         <h2 id="schedule-heading"><Icon name="calendar" /> Freie Termine</h2>
-                        <p class="demo-label">Demo-Termine</p>
+                        {!liveBooking && <p class="demo-label">Demo-Termine</p>}
                         <div class="day-grid" role="group" aria-label="Tag auswählen" data-days></div>
                         <div class="time-grid" role="group" aria-label="Uhrzeit auswählen" data-times></div>
                         <p class="schedule-status" role="status" data-schedule-status>Wähle zuerst eine Leistung.</p>
@@ -52,10 +55,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
                 <section class="step-panel" data-step="contact" aria-labelledby="contact-heading" hidden>
                     <h2 id="contact-heading" tabindex="-1">Kontaktdaten</h2>
-                    <p>Gib für diese Demobuchung einen Testnamen und eine Test-E-Mail-Adresse ein.</p>
+                    <p>{liveBooking ? 'Gib deinen Namen und deine E-Mail-Adresse für den Termin ein.' : 'Gib für diese Demobuchung einen Testnamen und eine Test-E-Mail-Adresse ein.'}</p>
                     <form method="post" autocomplete="off" novalidate>
                         <fieldset disabled>
-                            <legend class="sr-only">Test-Kontaktdaten</legend>
+                            <legend class="sr-only">Kontaktdaten</legend>
                             <div class="field">
                                 <label for="demo-name">Name</label>
                                 <input id="demo-name" type="text" maxlength="100" aria-describedby="demo-name-error" required />
@@ -67,7 +70,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                                 <p class="field-error" id="demo-email-error" hidden></p>
                             </div>
                             <div class="step-actions">
-                                <button class="action" type="submit">Demo abschliessen</button>
+                                <button class="action" type="submit">{liveBooking ? 'Termin buchen' : 'Demo abschliessen'}</button>
                                 <button class="text-action" type="button" data-back>Zurück zur Terminauswahl</button>
                             </div>
                         </fieldset>
@@ -76,8 +79,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
                 <section class="step-panel confirmation" data-step="confirmation" aria-labelledby="confirmation-heading" hidden>
                     <Icon name="check" class="confirmed-icon" />
-                    <h2 id="confirmation-heading" tabindex="-1">Demo abgeschlossen</h2>
-                    <p>Deine Auswahl wurde simuliert. Reservierung und Nachrichtenversand sind erst im Livebetrieb möglich.</p>
+                    <h2 id="confirmation-heading" tabindex="-1">{liveBooking ? 'Termin bestätigt' : 'Demo abgeschlossen'}</h2>
+                    <p>{liveBooking ? 'Dein Termin ist bei Bekim eingetragen.' : 'Deine Auswahl wurde simuliert. Reservierung und Nachrichtenversand sind erst im Livebetrieb möglich.'}</p>
                     <dl class="confirmation-details">
                         <div><dt>Leistung</dt><dd data-confirm-service></dd></div>
                         <div><dt>Datum</dt><dd data-confirm-date></dd></div>
@@ -85,9 +88,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                         <div><dt>Preis</dt><dd data-confirm-price></dd></div>
                         <div><dt>Barber</dt><dd data-confirm-barber></dd></div>
                         <div><dt>Adresse</dt><dd>{shop.address}</dd></div>
+                        {liveBooking && <div><dt>Buchungsnummer</dt><dd data-confirm-reference></dd></div>}
                     </dl>
                     <div class="step-actions">
-                        <a class="action" href={routes.booking}>Neue Demobuchung</a>
+                        <a class="action" href={routes.booking}>{liveBooking ? 'Neuen Termin buchen' : 'Neue Demobuchung'}</a>
                         <a class="text-action" href={routes.home}>Zur Startseite</a>
                     </div>
                 </section>
@@ -125,6 +129,11 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
     .booking-intro {
         margin-bottom: 1.35rem;
+    }
+
+    .booking-status {
+        margin-bottom: 1rem;
+        color: var(--error);
     }
 
     h1 {
@@ -486,6 +495,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
     .confirmation-details dd {
         font-weight: 600;
+        overflow-wrap: anywhere;
     }
 
     @media (max-width: 51.999rem) {

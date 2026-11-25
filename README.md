@@ -29,4 +29,22 @@ Die Terminalausgabe zeigt die lokale Adresse. `npm run check` prüft Astro und T
 
 ## Buchungsdemo
 
-Die Buchung simuliert fünf Werktage und richtet die angezeigten Daten an `Europe/Zurich` aus. Ein Tag ist absichtlich ausgebucht. Die Leistung bestimmt, welche Zeitfenster lang genug sind. Test-Kontaktdaten bleiben im Formular und werden nach der Demo-Bestätigung geleert. Für Livebuchungen sind der aktive Anbieter und seine Schnittstelle sowie Bekims Verfügbarkeit zu bestätigen.
+Die Buchung simuliert fünf Werktage und richtet die angezeigten Daten an `Europe/Zurich` aus. Ein Tag ist absichtlich ausgebucht. Die Leistung bestimmt, welche Zeitfenster lang genug sind. Test-Kontaktdaten bleiben im Formular und werden nach der Demo-Bestätigung geleert.
+
+## Eigenes Buchungssystem
+
+Die Node-Variante ergänzt die Website um einen Kalender mit gespeicherten Buchungen. Das Hosting muss Node.js und einen persistenten Speicher für SQLite bereitstellen. Die beiden statischen Builds dienen weiterhin der Demo.
+
+~~~sh
+npm ci
+npm run build:booking
+npm run start:booking
+~~~
+
+Öffne `/buchen/` an der im Terminal angezeigten Adresse. Der Server reserviert die Zeit in der lokalen SQLite-Datei und zeigt eine Buchungsnummer an. Die Dauer und der Preis kommen aus dem Leistungskatalog. Eine erneute Anfrage nach einem Verbindungsabbruch verwendet dieselbe Buchungskennung.
+
+`/verwaltung/` zeigt Bekim kommende Termine und ermöglicht die Stornierung. Für die Anmeldung das Passwort `BOOKING_ADMIN_PASSWORD` in einer lokalen `.env` setzen und den Benutzernamen `bekim` verwenden. `BOOKING_DB_PATH` legt den Speicherort fest. Ohne Angabe wird `data/bookings.sqlite` verwendet.
+
+Die Öffnungszeiten und Sperrtage stehen in `src/config/bookingHours.ts`. Die dort eingetragenen Zeiten sind Beispiele für die lokale Abnahme. Für einen öffentlichen Betrieb werden Bekims bestätigte Zeiten, HTTPS und ein dauerhaftes Datenverzeichnis gebraucht. Die HTTPS-Adresse der Website wird in der Build-Umgebung als `BOOKING_SITE_URL` gesetzt.
+
+`npm run test:booking` prüft überlappende Reservierungen, wiederholte Anfragen und Stornierungen mit zwei lokalen Serverprozessen.
