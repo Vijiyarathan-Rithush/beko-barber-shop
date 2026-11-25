@@ -1,5 +1,6 @@
 import { shop } from '../../config/shop';
 import { BookingSelection } from './application/BookingSelection';
+import type { BookingDay } from './domain/availability';
 import { findService, formatPrice } from './domain/services';
 import { createDemoCalendar } from './infrastructure/demoCalendar';
 
@@ -7,7 +8,7 @@ const view = document.querySelector<HTMLElement>('[data-booking]');
 
 if (view)
 {
-    enableBooking(view);
+    void enableBooking(view);
 }
 
 function element<T extends HTMLElement>(container: HTMLElement, selector: string): T
@@ -21,12 +22,35 @@ function element<T extends HTMLElement>(container: HTMLElement, selector: string
     return match;
 }
 
-function enableBooking(view: HTMLElement): void
+async function enableBooking(view: HTMLElement): Promise<void>
 {
-    const selection = new BookingSelection(createDemoCalendar());
+    const apiUrl = view.dataset.bookingApi;
+    const scheduleStatus = element(view, '[data-schedule-status]');
+    let days: readonly BookingDay[];
+
+    if (apiUrl)
+    {
+        scheduleStatus.textContent = 'Freie Termine werden geladen.';
+        try
+        {
+            days = await loadCalendar(apiUrl);
+        }
+        catch
+        {
+            scheduleStatus.textContent = 'Freie Termine konnten nicht geladen werden. Lade die Seite erneut.';
+            return;
+        }
+    }
+    else
+    {
+        days = createDemoCalendar();
+    }
+
+    let selection = new BookingSelection(days);
+    let attempt: { payload: string; requestId: string } | undefined;
+    const bookingStatus = element(view, '[data-booking-status]');
     const dayOptions = element(view, '[data-days]');
     const timeOptions = element(view, '[data-times]');
-    const scheduleStatus = element(view, '[data-schedule-status]');
     const nextDayButton = element<HTMLButtonElement>(view, '[data-next-day]');
     const summary = element(view, '[data-summary]');
     const summaryService = element(view, '[data-summary-service]');
@@ -45,20 +69,7 @@ function enableBooking(view: HTMLElement): void
     const emailError = element(form, '#demo-email-error');
     const serviceRadios = view.querySelectorAll<HTMLInputElement>('[name="service"]');
 
-    for (const day of selection.days)
-    {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.dataset.day = day.id;
-        button.className = 'day-option';
-        button.setAttribute('aria-label', day.fullDate);
-        const label = document.createElement('strong');
-        label.textContent = day.weekday;
-        const date = document.createElement('span');
-        date.textContent = day.shortDate;
-        button.append(label, date);
-        dayOptions.append(button);
-    }
+    renderDays();
 
     const preferredService = findService(new URLSearchParams(window.location.search).get('service'));
     if (preferredService)
@@ -150,7 +161,7 @@ function enableBooking(view: HTMLElement): void
     nameInput.addEventListener('input', () => updateError(nameInput, nameError, ''));
     emailInput.addEventListener('input', () => updateError(emailInput, emailError, ''));
 
-    form.addEventListener('submit', (event) =>
+    form.addEventListener('submit', async (event) =>
     {
         event.preventDefault();
         const appointment = selection.appointment;
@@ -164,13 +175,13 @@ function enableBooking(view: HTMLElement): void
         let emailMessage = '';
         if (!nameInput.value.trim())
         {
-            nameMessage = 'Gib einen Testnamen ein.';
+            nameMessage = apiUrl ? 'Gib deinen Namen ein.' : 'Gib einen Testnamen ein.';
         }
 
         emailInput.value = emailInput.value.trim();
         if (!emailInput.value)
         {
-            emailMessage = 'Gib eine Test-E-Mail-Adresse ein.';
+            emailMessage = apiUrl ? 'Gib deine E-Mail-Adresse ein.' : 'Gib eine Test-E-Mail-Adresse ein.';
         }
         else if (!emailInput.validity.valid)
         {
@@ -191,6 +202,67 @@ function enableBooking(view: HTMLElement): void
             return;
         }
 
+        if (apiUrl)
+        {
+            contactFields.disabled = true;
+            announceBookingStatus('Der Termin wird gebucht.');
+
+            try
+            {
+                const details = {
+                    serviceId: appointment.service.id,
+                    date: appointment.day.id,
+                    time: appointment.time,
+                    name: nameInput.value.trim(),
+                    email: emailInput.value
+                };
+                const payload = JSON.stringify(details);
+                if (attempt?.payload !== payload)
+                {
+                    attempt = { payload, requestId: crypto.randomUUID() };
+                }
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ...details, requestId: attempt.requestId })
+                });
+
+                if (response.status === 409)
+                {
+                    selection = new BookingSelection(await loadCalendar(apiUrl));
+                    selection.selectService(appointment.service);
+                    selection.selectDay(appointment.day.id);
+                    renderDays();
+                    renderSchedule();
+                    showStep(selectionStep);
+                    dayOptions.querySelector<HTMLButtonElement>('[aria-pressed="true"]')?.focus();
+                    announceBookingStatus('Dieser Termin ist inzwischen vergeben. Wähle eine andere Uhrzeit.');
+                    return;
+                }
+
+                if (!response.ok)
+                {
+                    const result = await response.json() as { error?: string };
+                    announceBookingStatus(result.error ?? 'Die Buchung konnte gerade nicht abgeschlossen werden.');
+                    return;
+                }
+
+                const result = await response.json() as { id: string };
+                element(confirmationStep, '[data-confirm-reference]').textContent = result.id;
+            }
+            catch
+            {
+                announceBookingStatus('Die Buchung konnte gerade nicht überprüft werden. Versuche es erneut.');
+                return;
+            }
+            finally
+            {
+                contactFields.disabled = false;
+            }
+        }
+
+        announceBookingStatus('');
         element(confirmationStep, '[data-confirm-service]').textContent = appointment.service.name;
         element(confirmationStep, '[data-confirm-date]').textContent = appointment.day.fullDate;
         element(confirmationStep, '[data-confirm-time]').textContent = appointment.time;
@@ -199,6 +271,25 @@ function enableBooking(view: HTMLElement): void
         form.reset();
         showStep(confirmationStep);
     });
+
+    function renderDays(): void
+    {
+        dayOptions.replaceChildren();
+        for (const day of selection.days)
+        {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.dataset.day = day.id;
+            button.className = 'day-option';
+            button.setAttribute('aria-label', day.fullDate);
+            const label = document.createElement('strong');
+            label.textContent = day.weekday;
+            const date = document.createElement('span');
+            date.textContent = day.shortDate;
+            button.append(label, date);
+            dayOptions.append(button);
+        }
+    }
 
     function renderSchedule(): void
     {
@@ -228,7 +319,9 @@ function enableBooking(view: HTMLElement): void
         }
         else if (!times.length)
         {
-            scheduleStatus.textContent = 'An diesem Tag sind alle Demo-Termine vergeben.';
+            scheduleStatus.textContent = apiUrl
+                ? 'An diesem Tag sind keine Termine verfügbar.'
+                : 'An diesem Tag sind alle Demo-Termine vergeben.';
             const nextDay = selection.nextAvailableDay();
             if (nextDay)
             {
@@ -266,6 +359,12 @@ function enableBooking(view: HTMLElement): void
         nextButton.disabled = !selection.appointment;
     }
 
+    function announceBookingStatus(message: string): void
+    {
+        bookingStatus.textContent = message;
+        bookingStatus.hidden = !message;
+    }
+
     function showStep(step: HTMLElement): void
     {
         selectionStep.hidden = step !== selectionStep;
@@ -280,6 +379,23 @@ function enableBooking(view: HTMLElement): void
             step.querySelector<HTMLElement>('h2')?.focus();
         }
     }
+}
+
+async function loadCalendar(apiUrl: string): Promise<readonly BookingDay[]>
+{
+    const response = await fetch(apiUrl, { cache: 'no-store' });
+    if (!response.ok)
+    {
+        throw new Error('Calendar is unavailable');
+    }
+
+    const result = await response.json() as { days?: BookingDay[] };
+    if (!Array.isArray(result.days))
+    {
+        throw new Error('Calendar response is invalid');
+    }
+
+    return result.days;
 }
 
 function clickedOption(event: Event, selector: string): HTMLButtonElement | null

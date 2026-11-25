@@ -1,4 +1,4 @@
-import type { BookingDay, Opening } from '../domain/availability';
+import { createBookingDay, type BookingDay, type Opening } from '../domain/availability';
 
 const OPENINGS: readonly (readonly Opening[])[] = [
     [['09:30', 20], ['10:10', 40], ['10:50', 20], ['11:30', 35], ['13:00', 30]],
@@ -15,10 +15,6 @@ const zurichDate = new Intl.DateTimeFormat('de-CH', {
     year: 'numeric'
 });
 
-const weekday = new Intl.DateTimeFormat('de-CH', { timeZone: 'UTC', weekday: 'short' });
-const shortDate = new Intl.DateTimeFormat('de-CH', { timeZone: 'UTC', day: 'numeric', month: 'short' });
-const fullDate = new Intl.DateTimeFormat('de-CH', { timeZone: 'UTC', dateStyle: 'full' });
-
 export function createDemoCalendar(now = new Date()): readonly BookingDay[]
 {
     const parts = Object.fromEntries(zurichDate.formatToParts(now).map(({ type, value }) => [type, value]));
@@ -33,13 +29,7 @@ export function createDemoCalendar(now = new Date()): readonly BookingDay[]
         }
         while (cursor.getUTCDay() === 0 || cursor.getUTCDay() === 6);
 
-        days.push({
-            id: cursor.toISOString().slice(0, 10),
-            weekday: weekday.format(cursor).replace('.', ''),
-            shortDate: shortDate.format(cursor),
-            fullDate: fullDate.format(cursor),
-            openings
-        });
+        days.push(createBookingDay(cursor, openings));
     }
 
     return days;
