@@ -9,7 +9,11 @@ function escapeHtml(value: string): string
         .replaceAll('"', '&quot;').replaceAll("'", '&#39;');
 }
 
-function bookingMessage(booking: BookingRequest): { text: string; html: string }
+type Appointment = Pick<BookingRequest, 'name' | 'email' | 'phone' | 'date' | 'time'> & {
+    service: Pick<BookingRequest['service'], 'name' | 'durationMinutes' | 'priceChf'>;
+};
+
+function bookingMessage(booking: Appointment, title: string): { text: string; html: string }
 {
     const date = new Intl.DateTimeFormat('de-CH', { dateStyle: 'full', timeZone: 'Europe/Zurich' })
         .format(new Date(booking.date + 'T12:00:00Z'));
@@ -27,12 +31,12 @@ function bookingMessage(booking: BookingRequest): { text: string; html: string }
     }
 
     const details = rows.map(([label, value]) => `<tr><th align="left" scope="row" style="padding:8px;color:#555;font-weight:normal">${label}</th><td style="padding:8px;color:#171717;overflow-wrap:anywhere">${escapeHtml(value)}</td></tr>`).join('');
-    const text = ['Beko’s Barber Shop', 'Neuer Termin', '', ...rows.map(([label, value]) => `${label}: ${value}`), '', `Terminverwaltung: ${appointmentUrl}`].join('\n');
+    const text = ['Beko’s Barber Shop', title, '', ...rows.map(([label, value]) => `${label}: ${value}`), '', `Terminverwaltung: ${appointmentUrl}`].join('\n');
     const html = `<div lang="de-CH" style="background:#f4f2ef;padding:20px 10px;font-family:Arial,sans-serif;color:#171717">
         <div style="max-width:540px;margin:auto;background:#fff;border-radius:12px;overflow:hidden">
             <div style="background:#171717;border-bottom:4px solid #f47721;padding:22px;color:#fff;font-size:18px;font-weight:bold">Beko’s Barber Shop</div>
             <div style="padding:22px">
-                <h1 style="font-size:24px;margin:0 0 14px">Neuer Termin</h1>
+                <h1 style="font-size:24px;margin:0 0 14px">${title}</h1>
                 <table style="width:100%;border-collapse:collapse;font-size:15px">${details}</table>
                 <p style="margin:22px 0 0"><a href="${appointmentUrl}" style="display:inline-block;background:#f47721;color:#171717;border-radius:6px;padding:12px 16px;text-decoration:none;font-weight:bold">Terminverwaltung öffnen</a></p>
             </div>
@@ -41,7 +45,7 @@ function bookingMessage(booking: BookingRequest): { text: string; html: string }
     return { text, html };
 }
 
-export function notifyStaff(id: string, booking: BookingRequest): void
+export function notifyStaff(id: string, booking: Appointment, event: 'booking' | 'cancellation' = 'booking'): void
 {
     const key = Deno.env.get('RESEND_API_KEY');
     const from = Deno.env.get('BOOKING_NOTIFICATION_FROM');
@@ -60,7 +64,8 @@ export function notifyStaff(id: string, booking: BookingRequest): void
         const recipients = [...new Set((await staffAccounts())
             .filter(account => account.role === 'staff' && account.notificationEmail)
             .map(account => account.notificationEmail))].sort();
-        const message = bookingMessage(booking);
+        const title = event === 'booking' ? 'Neuer Termin' : 'Termin storniert';
+        const message = bookingMessage(booking, title);
 
         const results = await Promise.allSettled(recipients.map(async (to) => {
             const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(to));
@@ -70,9 +75,9 @@ export function notifyStaff(id: string, booking: BookingRequest): void
                 headers: {
                     Authorization: 'Bearer ' + key,
                     'Content-Type': 'application/json',
-                    'Idempotency-Key': `booking/${id}/${recipient}`
+                    'Idempotency-Key': `${event}/${id}/${recipient}`
                 },
-                body: JSON.stringify({ from, to, subject: 'Neuer Termin bei Beko’s Barber Shop', ...message }),
+                body: JSON.stringify({ from, to, subject: title + ' bei Beko’s Barber Shop', ...message }),
                 signal: AbortSignal.timeout(5_000),
                 redirect: 'error'
             });

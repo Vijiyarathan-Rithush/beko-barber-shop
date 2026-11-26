@@ -11,7 +11,9 @@ export function bookingDatabase()
     {
         const url = new URL('/rest/v1/' + resource, project);
         url.search = new URLSearchParams(parameters).toString();
-        const response = await fetch(url, { ...init, headers, redirect: 'error', signal: AbortSignal.timeout(6_000) });
+        const requestHeaders = new Headers(headers);
+        new Headers(init?.headers).forEach((value, key) => requestHeaders.set(key, value));
+        const response = await fetch(url, { ...init, headers: requestHeaders, redirect: 'error', signal: AbortSignal.timeout(6_000) });
         if (!response.ok)
         {
             throw new Error('The Supabase Data API request failed.');
@@ -90,10 +92,36 @@ export function bookingDatabase()
 
         async cancelBooking(id: string): Promise<void>
         {
-            await dataRequest('beko_bookings', { id: 'eq.' + id, cancelled_at: 'is.null' }, {
+            const response = await dataRequest('beko_bookings', {
+                id: 'eq.' + id,
+                cancelled_at: 'is.null',
+                select: 'id,service,priceChf:price_chf,name,email,phone,startsAt:starts_at,endsAt:ends_at'
+            }, {
                 method: 'PATCH',
+                headers: { Prefer: 'return=representation' },
                 body: JSON.stringify({ cancelled_at: Date.now() })
             });
+            const [appointment] = await response.json() as BookingRow[];
+            if (appointment)
+            {
+                const starts = new Date(appointment.startsAt);
+                const timeZone = 'Europe/Zurich';
+                const parts = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' })
+                    .formatToParts(starts);
+                const part = (type: string) => parts.find(value => value.type === type)?.value;
+                notifyStaff(id, {
+                    date: [part('year'), part('month'), part('day')].join('-'),
+                    time: new Intl.DateTimeFormat('de-CH', { timeZone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(starts),
+                    name: appointment.name,
+                    email: appointment.email,
+                    phone: appointment.phone ?? undefined,
+                    service: {
+                        name: appointment.service,
+                        priceChf: appointment.priceChf,
+                        durationMinutes: (appointment.endsAt - appointment.startsAt) / 60_000
+                    }
+                }, 'cancellation');
+            }
         }
     };
 }
