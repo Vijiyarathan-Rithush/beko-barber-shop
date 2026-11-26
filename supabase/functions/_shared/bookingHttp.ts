@@ -1,5 +1,6 @@
 import { BOOKING_ID_PATTERN, type BookingRequest } from './booking.ts';
 import { getCalendar, type TimeRange } from './calendar.ts';
+import { contactPhone } from './contact.ts';
 import { findService } from './services.ts';
 
 interface PublicBookingStore
@@ -94,6 +95,12 @@ async function readBooking(request: Request): Promise<BookingRequest | undefined
     const { requestId, serviceId, date, time } = values;
     const name = typeof values.name === 'string' ? values.name.trim() : '';
     const email = typeof values.email === 'string' ? values.email.trim() : '';
+    const rawPhone = values.phone;
+    const phone = typeof rawPhone === 'string' && rawPhone.trim() ? contactPhone(rawPhone.trim()) : undefined;
+    if (rawPhone != null && (typeof rawPhone !== 'string' || (rawPhone.trim() && !phone)))
+    {
+        return undefined;
+    }
     const service = typeof serviceId === 'string' ? findService(serviceId) : undefined;
     if (!service || !name || name.length > 100 || email.length > 254
         || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -104,7 +111,7 @@ async function readBooking(request: Request): Promise<BookingRequest | undefined
         return undefined;
     }
 
-    return { requestId, service, date, time, name, email };
+    return { requestId, service, date, time, name, email, phone };
 }
 
 export async function handleBookingRequest(request: Request, store: PublicBookingStore): Promise<Response>

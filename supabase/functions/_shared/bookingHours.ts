@@ -1,18 +1,17 @@
 type OpeningHours = readonly [opensAt: string, closesAt: string];
 
-const exampleWorkday: readonly OpeningHours[] = [
-    ['09:00', '12:00'],
-    ['13:00', '18:00']
+const workday: readonly OpeningHours[] = [
+    ['09:00', '18:30']
 ];
 
-// Beispielzeiten für die lokale Abnahme. Montag hat den Wert 1.
+// Montag hat den Wert 1.
 export const BOOKING_HOURS: Readonly<Partial<Record<number, readonly OpeningHours[]>>> = {
-    1: exampleWorkday,
-    2: exampleWorkday,
-    3: exampleWorkday,
-    4: exampleWorkday,
-    5: exampleWorkday,
-    6: exampleWorkday
+    1: workday,
+    2: workday,
+    3: workday,
+    4: workday,
+    5: workday,
+    6: [['09:00', '17:30']]
 };
 
 export const CLOSED_DATES: ReadonlySet<string> = new Set();

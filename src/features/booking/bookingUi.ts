@@ -214,7 +214,8 @@ async function enableBooking(view: HTMLElement): Promise<void>
                     date: appointment.day.id,
                     time: appointment.time,
                     name: nameInput.value.trim(),
-                    email: emailInput.value
+                    email: emailInput.value,
+                    phone: element<HTMLInputElement>(form, '#booking-phone').value.trim()
                 };
                 const payload = JSON.stringify(details);
                 if (attempt?.payload !== payload)

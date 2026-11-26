@@ -1,4 +1,5 @@
-import { hashBooking, type BookingRequest, type BookingRow } from '../_shared/booking.ts';
+import { notifyStaff } from './notifications.ts';
+import { BOOKING_HISTORY_LIMIT, hashBooking, type BookingHistoryRow, type BookingRequest, type BookingRow } from '../_shared/booking.ts';
 import { getBookingTime, type TimeRange } from '../_shared/calendar.ts';
 import { supabaseService } from './supabaseAccess.ts';
 
@@ -40,7 +41,7 @@ export function bookingDatabase()
 
         async book(request: BookingRequest): Promise<string | undefined>
         {
-            const { requestId, service, date, time, name, email } = request;
+            const { requestId, service, date, time, name, email, phone } = request;
             const range = getBookingTime(date, time, service.durationMinutes, Date.now());
             const response = await dataRequest('rpc/beko_reserve_booking', {}, {
                 method: 'POST',
@@ -51,23 +52,40 @@ export function bookingDatabase()
                     p_price_chf: service.priceChf,
                     p_name: name,
                     p_email: email,
+                    p_phone: phone ?? null,
                     p_starts_at: range?.startsAt ?? null,
                     p_ends_at: range?.endsAt ?? null
                 })
             });
             const id: unknown = await response.json();
-            return typeof id === 'string' ? id : undefined;
+            if (typeof id === 'string')
+            {
+                notifyStaff(id, request);
+                return id;
+            }
+            return undefined;
         },
 
-        async upcomingBookings(): Promise<BookingRow[]>
+        async upcomingBookings(now = Date.now()): Promise<BookingRow[]>
         {
             const response = await dataRequest('beko_bookings', {
-                select: 'id,service,priceChf:price_chf,name,email,startsAt:starts_at,endsAt:ends_at',
+                select: 'id,service,priceChf:price_chf,name,email,phone,startsAt:starts_at,endsAt:ends_at',
                 cancelled_at: 'is.null',
-                ends_at: 'gt.' + Date.now(),
+                ends_at: 'gt.' + now,
                 order: 'starts_at.asc'
             });
             return await response.json() as BookingRow[];
+        },
+
+        async bookingHistory(now: number): Promise<BookingHistoryRow[]>
+        {
+            const response = await dataRequest('beko_bookings', {
+                select: 'id,service,name,startsAt:starts_at,cancelledAt:cancelled_at',
+                or: `(cancelled_at.not.is.null,ends_at.lte.${now})`,
+                order: 'starts_at.desc,id.desc',
+                limit: String(BOOKING_HISTORY_LIMIT)
+            });
+            return await response.json() as BookingHistoryRow[];
         },
 
         async cancelBooking(id: string): Promise<void>

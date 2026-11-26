@@ -1,4 +1,4 @@
-import { staffAccount, type StaffAccount } from '../_shared/staffAccount.ts';
+import { staffAccount, type StaffAccount, type StaffDirectoryEntry } from '../_shared/staffAccount.ts';
 
 function projectUrl(): string
 {
@@ -66,17 +66,77 @@ export async function authenticateStaff(request: Request): Promise<StaffAccount 
     return staffAccount(await response.json());
 }
 
-export async function staffAccounts(): Promise<StaffAccount[]>
+type AuthUser = Parameters<typeof staffAccount>[0] & {
+    id: string;
+    app_metadata?: Record<string, unknown>;
+};
+
+async function adminAuth(path: string, method = 'GET', body?: object): Promise<Response>
 {
     const { project, headers } = supabaseService();
-    const url = new URL('/auth/v1/admin/users', project);
-    url.searchParams.set('per_page', '1000');
-    const response = await fetch(url, { headers, redirect: 'error', signal: AbortSignal.timeout(5_000) });
+    return fetch(new URL('/auth/v1/admin/' + path, project), {
+        method, headers, body: body && JSON.stringify(body),
+        redirect: 'error', signal: AbortSignal.timeout(5_000)
+    });
+}
+
+export async function staffAccounts(): Promise<StaffDirectoryEntry[]>
+{
+    const response = await adminAuth('users?per_page=1000');
     if (!response.ok)
     {
         throw new Error('Supabase Auth did not return the accounts.');
     }
 
-    const { users } = await response.json() as { users: Parameters<typeof staffAccount>[0][] };
-    return users.map(staffAccount).filter(account => account !== undefined);
+    const { users } = await response.json() as { users: AuthUser[] };
+    return users.flatMap(user => {
+        const account = staffAccount(user);
+        const { beko_notification_email, beko_notification_phone } = user.app_metadata ?? {};
+        return account ? [{
+            ...account, id: user.id,
+            notificationEmail: typeof beko_notification_email === 'string' ? beko_notification_email : '',
+            notificationPhone: typeof beko_notification_phone === 'string' ? beko_notification_phone : ''
+        }] : [];
+    });
+}
+
+export async function createStaff(email: string): Promise<boolean>
+{
+    const response = await adminAuth('users', 'POST', { email, app_metadata: { beko_role: 'staff' } });
+    return response.ok;
+}
+
+export async function saveStaffContact(id: string, email: string, phone: string): Promise<boolean>
+{
+    const response = await adminAuth('users/' + id);
+    if (!response.ok)
+    {
+        return false;
+    }
+    const payload = await response.json() as AuthUser | { user: AuthUser };
+    const user = 'user' in payload ? payload.user : payload;
+    if (staffAccount(user)?.role !== 'staff')
+    {
+        return false;
+    }
+    const updated = await adminAuth('users/' + id, 'PUT', {
+        app_metadata: { beko_notification_email: email, beko_notification_phone: phone }
+    });
+    return updated.ok;
+}
+
+export async function staffSetupToken(email: string): Promise<string | undefined>
+{
+    const account = (await staffAccounts()).find(user => user.role === 'staff' && user.email === email);
+    if (!account)
+    {
+        return undefined;
+    }
+    const response = await adminAuth('generate_link', 'POST', { type: 'recovery', email });
+    if (!response.ok)
+    {
+        return undefined;
+    }
+    const data = await response.json() as { hashed_token?: string };
+    return data.hashed_token;
 }

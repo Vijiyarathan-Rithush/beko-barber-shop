@@ -1,9 +1,15 @@
 ---
-import type { BookingRow } from '../../../../supabase/functions/_shared/booking';
+import { BOOKING_HISTORY_LIMIT, type BookingHistoryRow, type BookingRow } from '../../../../supabase/functions/_shared/booking';
 
-interface Props { bookings: BookingRow[] }
+interface Props
+{
+    bookings: BookingRow[];
+    history?: BookingHistoryRow[];
+    fromAdmin?: boolean;
+    showDemoNotice?: boolean;
+}
 
-const { bookings } = Astro.props;
+const { bookings, history = [], fromAdmin = false, showDemoNotice = false } = Astro.props;
 const date = new Intl.DateTimeFormat('de-CH', {
     timeZone: 'Europe/Zurich',
     dateStyle: 'medium',
@@ -18,16 +24,40 @@ const date = new Intl.DateTimeFormat('de-CH', {
                 <div>
                     <h2>{booking.service}</h2>
                     <p>{date.format(booking.startsAt)} · CHF {booking.priceChf}</p>
-                    <p>{booking.name} · {booking.email}</p>
+                    <p>{booking.name} · {booking.email}{booking.phone && <> · <a href={'tel:' + booking.phone}>{booking.phone}</a></>}</p>
                 </div>
-                <form method="post">
+                <form method="post" action={fromAdmin ? '/verwaltung/' : undefined}>
                     <input type="hidden" name="id" value={booking.id} />
+                    {fromAdmin && <input type="hidden" name="returnToAdmin" value="true" />}
                     <button class="action action--outline" type="submit">Termin stornieren</button>
                 </form>
             </li>
         ))}
     </ul>
-) : <p>Es gibt keine kommenden Termine.</p>}
+) : (
+    <div class="empty-bookings">
+        <p>Es gibt keine kommenden Termine.</p>
+        {showDemoNotice && <p>Die öffentliche Buchung läuft im Demo-Modus. Termine aus der geschützten Vorschau erscheinen hier.</p>}
+    </div>
+)}
+
+{history.length > 0 && (
+    <details class="booking-history">
+        <summary>Verlauf ({history.length})</summary>
+        {history.length >= BOOKING_HISTORY_LIMIT && <p>Die letzten {BOOKING_HISTORY_LIMIT} Einträge.</p>}
+        <ul>
+            {history.map((booking) => (
+                <li>
+                    <div>
+                        <h3>{booking.service}</h3>
+                        <p>{date.format(booking.startsAt)} · {booking.name}</p>
+                    </div>
+                    <span>{booking.cancelledAt === null ? 'Vergangen' : 'Storniert'}</span>
+                </li>
+            ))}
+        </ul>
+    </details>
+)}
 
 <style lang="scss">
     ul { list-style: none; margin: 0; padding: 0; }
@@ -41,5 +71,10 @@ const date = new Intl.DateTimeFormat('de-CH', {
         border-bottom: 1px solid var(--line);
     }
     h2 { font-size: 1.7rem; margin-bottom: .3rem; }
+    h3 { font-size: 1.4rem; margin-bottom: .25rem; }
     p { overflow-wrap: anywhere; }
+    .empty-bookings p + p { color: var(--muted); margin-top: .4rem; }
+    .booking-history { margin-top: 1.5rem; border-top: 1px solid var(--line); }
+    .booking-history summary { cursor: pointer; font-weight: 700; padding: .85rem 0; }
+    .booking-history span { color: var(--muted); }
 </style>

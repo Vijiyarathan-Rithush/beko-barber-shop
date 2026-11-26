@@ -20,3 +20,10 @@ export function staffAccount(user: {
 
     return undefined;
 }
+
+export interface StaffDirectoryEntry extends StaffAccount
+{
+    readonly id: string;
+    readonly notificationEmail: string;
+    readonly notificationPhone: string;
+}

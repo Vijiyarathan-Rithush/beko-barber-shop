@@ -1,7 +1,9 @@
 ---
-import type { StaffAccount } from '../../../../supabase/functions/_shared/staffAccount';
+import type { StaffDirectoryEntry } from '../../../../supabase/functions/_shared/staffAccount';
+import type { BookingOverview } from '../../../../supabase/functions/_shared/booking';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import { staffAuth, staffSession } from './staffAuth';
+import BookingList from '../../booking/server/BookingList.astro';
+import { sameOrigin, staffAuth, staffSession } from './staffAuth';
 import { callStaffBackend } from './staffGateway';
 
 Astro.response.headers.set('Cache-Control', 'private, no-store');
@@ -18,41 +20,114 @@ if (session.account.role !== 'admin')
     });
 }
 
-let accounts: StaffAccount[];
-try
+let setupLink: string | undefined;
+let error: string | undefined;
+if (Astro.request.method === 'POST')
 {
-    accounts = await (await callStaffBackend(session.accessToken, 'staff-accounts')).json() as StaffAccount[];
+    if (!sameOrigin(Astro.request, Astro.url))
+    {
+        return new Response(null, { status: 403 });
+    }
+    const fields = await Astro.request.formData().catch(() => undefined);
+    const value = (key: string) => String(fields?.get(key) ?? '');
+    const operation = value('operation');
+    try
+    {
+        const response = await callStaffBackend(session.accessToken, 'staff-accounts', {
+            operation, id: value('id'), email: value('email'), phone: value('phone')
+        });
+        if (operation !== 'setup')
+        {
+            return Astro.redirect('/verwaltung/admin/', 303);
+        }
+        const { token } = await response.json() as { token: string };
+        setupLink = new URL('/verwaltung/passwort-waehlen/#setup=' + encodeURIComponent(token), Astro.url.origin).href;
+    }
+    catch
+    {
+        error = 'Die Änderung konnte nicht gespeichert werden. Prüfe die Eingaben und ob die E-Mail-Adresse bereits registriert ist.';
+    }
 }
-catch
-{
-    return new Response('Die Zugänge konnten vorübergehend nicht geladen werden.', {
-        status: 503,
-        headers: { 'Cache-Control': 'private, no-store' }
-    });
-}
+
+const liveBooking = typeof __BEKO_LIVE_BOOKING__ !== 'undefined' && __BEKO_LIVE_BOOKING__;
+const [overview, accounts] = await Promise.allSettled([
+    callStaffBackend(session.accessToken, 'appointment-overview').then(response => response.json() as Promise<BookingOverview>),
+    callStaffBackend(session.accessToken, 'staff-accounts').then(response => response.json() as Promise<StaffDirectoryEntry[]>)
+]);
 ---
 
 <BaseLayout title="Adminbereich | Beko’s Barber Shop" description="Geschützter Adminbereich für die Terminverwaltung.">
     <section class="layout-width admin">
-        <a href="/verwaltung/">Zurück zu den Terminen</a>
-        <h1>Adminbereich</h1>
-        <h2>Zugänge</h2>
-        <ul>
-            {accounts.map(({ role, email }) => (
-                <li>
-                    <strong>{role === 'admin' ? 'Admin' : 'Bekim'}</strong>
-                    <span>{email}</span>
-                </li>
-            ))}
-        </ul>
+        <header>
+            <h1>Adminbereich</h1>
+            <form action="/verwaltung/" method="post">
+                <input type="hidden" name="action" value="logout" />
+                <button class="action action--outline" type="submit">Abmelden</button>
+            </form>
+        </header>
+        <section aria-labelledby="admin-appointments">
+            <h2 id="admin-appointments">Kommende Termine</h2>
+            {overview.status === 'fulfilled' ? (
+                <BookingList bookings={overview.value.upcoming} history={overview.value.history} fromAdmin showDemoNotice={!liveBooking} />
+            ) : <p role="status">Die Termine konnten vorübergehend nicht geladen werden.</p>}
+        </section>
+        <section aria-labelledby="admin-accounts" class="accounts">
+            <h2 id="admin-accounts">Zugänge</h2>
+            {error && <p role="alert">{error}</p>}
+            {setupLink && <label>Einmaliger Link zum Passwort festlegen
+                <input type="text" readonly value={setupLink} />
+                <small>Teile den Link direkt mit der Person, für die du ihn erstellt hast.</small>
+            </label>}
+            <form method="post" class="account-form">
+                <input type="hidden" name="operation" value="create" />
+                <label>Login-E-Mail für neuen Mitarbeiter
+                    <input type="email" name="email" autocomplete="off" maxlength="254" required />
+                </label>
+                <button class="action action--outline" type="submit">Konto anlegen</button>
+            </form>
+            {accounts.status === 'fulfilled' ? (
+                <ul>
+                    {accounts.value.map(({ id, role, email, notificationEmail, notificationPhone }) => (
+                        <li>
+                            <strong>{role === 'admin' ? 'Admin' : 'Bekim'}</strong>
+                            <span>{email}</span>
+                            {role === 'staff' && <div class="account-settings">
+                                <form method="post" class="account-form">
+                                    <input type="hidden" name="operation" value="contact" />
+                                    <input type="hidden" name="id" value={id} />
+                                    <label>E-Mail für Buchungsbenachrichtigungen
+                                        <input name="email" type="email" maxlength="254" value={notificationEmail} />
+                                    </label>
+                                    <label>Telefonnummer für Benachrichtigungen
+                                        <input name="phone" type="tel" maxlength="40" placeholder="+41 …" value={notificationPhone} />
+                                    </label>
+                                    <button class="action action--outline" type="submit">Kontaktdaten speichern</button>
+                                </form>
+                                <form method="post">
+                                    <input type="hidden" name="operation" value="setup" />
+                                    <input type="hidden" name="email" value={email} />
+                                    <button class="action action--outline" type="submit">Passwort-Link erstellen</button>
+                                </form>
+                            </div>}
+                        </li>
+                    ))}
+                </ul>
+            ) : <p role="status">Die Zugänge konnten vorübergehend nicht geladen werden.</p>}
+        </section>
     </section>
 </BaseLayout>
 
 <style lang="scss">
     .admin { padding-block: clamp(2rem, 7vw, 4rem); }
-    h1 { font-size: clamp(2.5rem, 8vw, 4rem); margin: .6rem 0 1.4rem; }
-    h2 { font-size: 1.7rem; }
+    header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .8rem 1rem; margin-bottom: 1.5rem; }
+    h1 { font-size: clamp(2.5rem, 8vw, 4rem); }
+    h2 { font-size: 1.7rem; margin-bottom: .55rem; }
+    .accounts { border-top: 1px solid var(--line); margin-top: 1.8rem; padding-top: 1.25rem; }
     ul { list-style: none; margin: 0; padding: 0; }
     li { display: flex; flex-wrap: wrap; justify-content: space-between; gap: .4rem 1rem; padding: .85rem 0; border-bottom: 1px solid var(--line); }
+    .account-settings { flex-basis: 100%; display: grid; gap: .8rem; }
+    .account-form { display: flex; align-items: end; flex-wrap: wrap; gap: .8rem; }
+    label { display: grid; gap: .3rem; }
+    input { color: inherit; background: var(--surface, #171717); border: 1px solid var(--line); border-radius: .35rem; padding: .6rem; }
     span { overflow-wrap: anywhere; }
 </style>

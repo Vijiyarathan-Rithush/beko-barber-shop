@@ -1,4 +1,4 @@
-export async function callStaffBackend(accessToken: string, action: 'management' | 'staff-accounts', id?: string): Promise<Response>
+export async function callStaffBackend(accessToken: string, action: 'management' | 'appointment-overview' | 'staff-accounts', input?: string | Record<string, string>): Promise<Response>
 {
     const project = process.env.SUPABASE_URL;
     if (!project)
@@ -9,15 +9,15 @@ export async function callStaffBackend(accessToken: string, action: 'management'
     const url = new URL('/functions/v1/booking', project);
     url.searchParams.set('action', action);
     const headers = new Headers({ Authorization: `Bearer ${accessToken}` });
-    if (id)
+    if (input)
     {
         headers.set('Content-Type', 'application/json');
     }
 
     const response = await fetch(url, {
         headers,
-        method: id ? 'POST' : 'GET',
-        body: id ? JSON.stringify({ id }) : undefined,
+        method: input ? 'POST' : 'GET',
+        body: input ? JSON.stringify(typeof input === 'string' ? { id: input } : input) : undefined,
         redirect: 'error',
         signal: AbortSignal.timeout(8_000)
     });

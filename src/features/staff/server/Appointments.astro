@@ -1,5 +1,5 @@
 ---
-import { BOOKING_ID_PATTERN, type BookingRow } from '../../../../supabase/functions/_shared/booking';
+import { BOOKING_ID_PATTERN, type BookingOverview } from '../../../../supabase/functions/_shared/booking';
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import BookingList from '../../booking/server/BookingList.astro';
 import { sameOrigin, staffAuth, staffSession } from './staffAuth';
@@ -13,7 +13,8 @@ if (!session)
     return Astro.redirect('/verwaltung/anmelden/', 303);
 }
 
-let bookings: BookingRow[];
+const liveBooking = typeof __BEKO_LIVE_BOOKING__ !== 'undefined' && __BEKO_LIVE_BOOKING__;
+let overview: BookingOverview;
 try
 {
     if (Astro.request.method === 'POST')
@@ -37,10 +38,11 @@ try
         }
 
         await callStaffBackend(session.accessToken, 'management', id);
-        return Astro.redirect('/verwaltung/', 303);
+        const returnToAdmin = session.account.role === 'admin' && fields?.get('returnToAdmin') === 'true';
+        return Astro.redirect(returnToAdmin ? '/verwaltung/admin/' : '/verwaltung/', 303);
     }
 
-    bookings = await (await callStaffBackend(session.accessToken, 'management')).json() as BookingRow[];
+    overview = await (await callStaffBackend(session.accessToken, 'appointment-overview')).json() as BookingOverview;
 }
 catch
 {
@@ -66,7 +68,7 @@ catch
                 </form>
             </div>
         </header>
-        <BookingList {bookings} />
+        <BookingList bookings={overview.upcoming} history={overview.history} showDemoNotice={!liveBooking} />
     </section>
 </BaseLayout>
 

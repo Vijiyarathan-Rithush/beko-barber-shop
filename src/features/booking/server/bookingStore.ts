@@ -21,6 +21,7 @@ function database(): DatabaseSync
     {
         db.exec(`
             PRAGMA busy_timeout = 5000;
+            BEGIN IMMEDIATE;
             CREATE TABLE IF NOT EXISTS bookings (
                 id TEXT PRIMARY KEY,
                 request_id TEXT UNIQUE NOT NULL,
@@ -29,6 +30,7 @@ function database(): DatabaseSync
                 price_chf INTEGER NOT NULL,
                 name TEXT NOT NULL,
                 email TEXT NOT NULL,
+                phone TEXT,
                 starts_at INTEGER NOT NULL,
                 ends_at INTEGER NOT NULL CHECK (ends_at > starts_at),
                 cancelled_at INTEGER
@@ -36,6 +38,11 @@ function database(): DatabaseSync
             CREATE INDEX IF NOT EXISTS booked_starts
                 ON bookings(starts_at) WHERE cancelled_at IS NULL;
         `);
+        if (!db.prepare("SELECT 1 FROM pragma_table_info('bookings') WHERE name = 'phone'").get())
+        {
+            db.exec('ALTER TABLE bookings ADD COLUMN phone TEXT');
+        }
+        db.exec('COMMIT');
     }
     catch (error)
     {
@@ -85,10 +92,10 @@ export function book(request: BookingRequest): string | undefined
                 bookingId = randomUUID();
                 db.prepare(`
                     INSERT INTO bookings
-                        (id, request_id, request_hash, service, price_chf, name, email, starts_at, ends_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        (id, request_id, request_hash, service, price_chf, name, email, phone, starts_at, ends_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 `).run(bookingId, request.requestId, requestHash, request.service.name, request.service.priceChf,
-                    request.name, request.email, range.startsAt, range.endsAt);
+                    request.name, request.email, request.phone ?? null, range.startsAt, range.endsAt);
             }
         }
 
@@ -105,7 +112,7 @@ export function book(request: BookingRequest): string | undefined
 export function upcomingBookings(): BookingRow[]
 {
     return database().prepare(`
-        SELECT id, service, price_chf AS priceChf, name, email, starts_at AS startsAt, ends_at AS endsAt
+        SELECT id, service, price_chf AS priceChf, name, email, phone, starts_at AS startsAt, ends_at AS endsAt
         FROM bookings WHERE cancelled_at IS NULL AND ends_at > ?
         ORDER BY starts_at
     `).all(Date.now()) as unknown as BookingRow[];
