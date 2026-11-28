@@ -4,6 +4,8 @@ dist-pages/
 dist-booking/
 /data/
 .astro/
+.vercel/
+supabase/.temp/
 .env
 .env.*
 !.env.example

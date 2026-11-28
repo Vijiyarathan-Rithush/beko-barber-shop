@@ -1,5 +1,5 @@
-import type { BookingDay } from '../domain/availability';
-import type { Service } from '../domain/services';
+import type { BookingDay } from '../../../../supabase/functions/_shared/availability';
+import type { Service } from '../../../../supabase/functions/_shared/services';
 
 interface Appointment
 {

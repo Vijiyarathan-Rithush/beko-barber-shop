@@ -1,7 +1,7 @@
 import { shop } from '../../config/shop';
 import { BookingSelection } from './application/BookingSelection';
-import type { BookingDay } from './domain/availability';
-import { findService, formatPrice } from './domain/services';
+import type { BookingDay } from '../../../supabase/functions/_shared/availability';
+import { findService, formatPrice } from '../../../supabase/functions/_shared/services';
 import { createDemoCalendar } from './infrastructure/demoCalendar';
 
 const view = document.querySelector<HTMLElement>('[data-booking]');
@@ -214,7 +214,8 @@ async function enableBooking(view: HTMLElement): Promise<void>
                     date: appointment.day.id,
                     time: appointment.time,
                     name: nameInput.value.trim(),
-                    email: emailInput.value
+                    email: emailInput.value,
+                    phone: element<HTMLInputElement>(form, '#booking-phone').value.trim()
                 };
                 const payload = JSON.stringify(details);
                 if (attempt?.payload !== payload)

@@ -1,0 +1,55 @@
+---
+import { staffAccount } from '../../../../supabase/functions/_shared/staffAccount';
+import StaffForm from './StaffForm.astro';
+import { sameOrigin, staffAuth, staffSession } from './staffAuth';
+
+Astro.response.headers.set('Cache-Control', 'private, no-store');
+const client = staffAuth(Astro);
+let error: string | undefined;
+let email = '';
+
+if (Astro.request.method === 'POST')
+{
+    if (!sameOrigin(Astro.request, Astro.url))
+    {
+        return new Response(null, { status: 403, headers: { 'Cache-Control': 'no-store' } });
+    }
+
+    const fields = await Astro.request.formData().catch(() => undefined);
+    const submittedEmail = fields?.get('email');
+    const password = fields?.get('password');
+    email = typeof submittedEmail === 'string' ? submittedEmail.trim().slice(0, 254) : '';
+
+    if (email && typeof password === 'string' && password.length > 0 && password.length <= 128)
+    {
+        const { data, error: signInError } = await client.auth.signInWithPassword({ email, password });
+        if (!signInError && staffAccount(data.user))
+        {
+            return Astro.redirect('/verwaltung/', 303);
+        }
+
+        if (data.session)
+        {
+            await client.auth.signOut({ scope: 'local' });
+        }
+    }
+
+    error = 'Anmeldung fehlgeschlagen. Prüfe deine E-Mail-Adresse und dein Passwort.';
+}
+else if (await staffSession(client))
+{
+    return Astro.redirect('/verwaltung/', 303);
+}
+---
+
+<StaffForm title="Mitarbeiter-Login" {error}>
+    <form method="post" action="/verwaltung/anmelden/">
+        <label>E-Mail-Adresse
+            <input name="email" type="email" autocomplete="username" maxlength="254" value={email} required />
+        </label>
+        <label>Passwort
+            <input name="password" type="password" autocomplete="current-password" maxlength="128" required />
+        </label>
+        <button type="submit" class="action">Anmelden</button>
+    </form>
+</StaffForm>

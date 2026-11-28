@@ -1,5 +1,6 @@
 ---
 import { routes, shop } from '../config/shop';
+const staffLogin = typeof __BEKO_STAFF_LOGIN__ !== 'undefined' && __BEKO_STAFF_LOGIN__;
 ---
 
 <footer class="site-footer">
@@ -12,6 +13,7 @@ import { routes, shop } from '../config/shop';
             {shop.phone && <a href={'tel:' + shop.phone.replaceAll(' ', '')}>{shop.phone}</a>}
             {shop.instagramUrl && <a href={shop.instagramUrl}>Instagram</a>}
             <a href={shop.directionsUrl}>Route planen</a>
+            {staffLogin && <a href={routes.staffLogin}>Mitarbeiter-Login</a>}
         </div>
     </div>
 </footer>

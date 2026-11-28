@@ -76,12 +76,6 @@ function book(server, details)
     });
 }
 
-function minute(label)
-{
-    const [hours, minutes] = label.split(':').map(Number);
-    return hours * 60 + minutes;
-}
-
 test('stores, rejects overlapping bookings, and reopens cancelled slots', { timeout: 25000 }, async () =>
 {
     const directory = mkdtempSync(join(tmpdir(), 'beko-booking-test-'));
@@ -123,25 +117,22 @@ test('stores, rejects overlapping bookings, and reopens cancelled slots', { time
         assert.doesNotMatch(bookingPage, />Demo abschliessen</);
 
         const { days } = await waitForCalendar(first);
-        const day = days.find((entry) => entry.openings.some(([label, free], index) =>
-            free >= 20 && entry.openings[index + 1]?.[1] >= 20
-                && minute(entry.openings[index + 1][0]) - minute(label) === 10
-        ));
+        const day = days.find(entry => entry.openings.some(([, free]) => free >= 20));
         assert.ok(day);
-        const index = day.openings.findIndex(([label, free], index) =>
-            free >= 20 && day.openings[index + 1]?.[1] >= 20
-                && minute(day.openings[index + 1][0]) - minute(label) === 10
-        );
-        const times = [day.openings[index][0], day.openings[index + 1][0]];
+        const opening = day.openings.find(([, free]) => free >= 20);
+        const times = [opening[0], opening[0]];
         const requests = times.map((time, index) => ({
             requestId: randomUUID(),
             date: day.id,
             time,
             serviceId: 'haircut',
             name: 'Testkunde ' + index,
-            email: 'test' + index + '@example.test'
+            email: 'test' + index + '@example.test',
+            phone: '+41 79 123 45 67'
         }));
 
+        const invalidPhone = await book(first, { ...requests[0], phone: 'invalid' });
+        assert.equal(invalidPhone.status, 400);
         const responses = await Promise.all([book(first, requests[0]), book(second, requests[1])]);
         assert.deepEqual(responses.map(({ status }) => status).sort(), [201, 409]);
         const winner = responses.findIndex(({ status }) => status === 201);
@@ -151,6 +142,7 @@ test('stores, rejects overlapping bookings, and reopens cancelled slots', { time
         try
         {
             assert.equal(db.prepare('SELECT COUNT(*) AS count FROM bookings').get().count, 1);
+            assert.equal(db.prepare('SELECT phone FROM bookings WHERE id = ?').get(id).phone, '+41791234567');
         }
         finally
         {

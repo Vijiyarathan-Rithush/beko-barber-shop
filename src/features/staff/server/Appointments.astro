@@ -1,0 +1,81 @@
+---
+import { BOOKING_ID_PATTERN, type BookingOverview } from '../../../../supabase/functions/_shared/booking';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import BookingList from '../../booking/server/BookingList.astro';
+import { sameOrigin, staffAuth, staffSession } from './staffAuth';
+import { callStaffBackend } from './staffGateway';
+
+Astro.response.headers.set('Cache-Control', 'private, no-store');
+const client = staffAuth(Astro);
+const session = await staffSession(client);
+if (!session)
+{
+    return Astro.redirect('/verwaltung/anmelden/', 303);
+}
+
+const liveBooking = typeof __BEKO_LIVE_BOOKING__ !== 'undefined' && __BEKO_LIVE_BOOKING__;
+let overview: BookingOverview;
+try
+{
+    if (Astro.request.method === 'POST')
+    {
+        if (!sameOrigin(Astro.request, Astro.url))
+        {
+            return new Response(null, { status: 403, headers: { 'Cache-Control': 'no-store' } });
+        }
+
+        const fields = await Astro.request.formData().catch(() => undefined);
+        if (fields?.get('action') === 'logout')
+        {
+            await client.auth.signOut({ scope: 'local' });
+            return Astro.redirect('/verwaltung/anmelden/', 303);
+        }
+
+        const id = fields?.get('id');
+        if (typeof id !== 'string' || !BOOKING_ID_PATTERN.test(id))
+        {
+            return new Response('Ungültiger Termin', { status: 400, headers: { 'Cache-Control': 'no-store' } });
+        }
+
+        await callStaffBackend(session.accessToken, 'management', id);
+        const returnToAdmin = session.account.role === 'admin' && fields?.get('returnToAdmin') === 'true';
+        return Astro.redirect(returnToAdmin ? '/verwaltung/admin/' : '/verwaltung/', 303);
+    }
+
+    overview = await (await callStaffBackend(session.accessToken, 'appointment-overview')).json() as BookingOverview;
+}
+catch
+{
+    return new Response('Die Terminverwaltung ist vorübergehend nicht verfügbar.', {
+        status: 503,
+        headers: { 'Cache-Control': 'private, no-store' }
+    });
+}
+---
+
+<BaseLayout title="Bekims Termine | Beko’s Barber Shop" description="Geschützte Terminverwaltung für Beko’s Barber Shop.">
+    <section class="layout-width staff-appointments">
+        <header>
+            <div>
+                <h1>Bekims Termine</h1>
+                <p>{session.account.email}</p>
+            </div>
+            <div class="staff-actions">
+                {session.account.role === 'admin' && <a class="action action--outline" href="/verwaltung/admin/">Adminbereich</a>}
+                <form action="/verwaltung/" method="post">
+                    <input type="hidden" name="action" value="logout" />
+                    <button type="submit" class="action action--outline">Abmelden</button>
+                </form>
+            </div>
+        </header>
+        <BookingList bookings={overview.upcoming} history={overview.history} showDemoNotice={!liveBooking} />
+    </section>
+</BaseLayout>
+
+<style lang="scss">
+    .staff-appointments { padding-block: clamp(2rem, 7vw, 4rem); }
+    header, .staff-actions { display: flex; flex-wrap: wrap; gap: .8rem 1rem; align-items: center; }
+    header { justify-content: space-between; padding-bottom: 1.35rem; margin-bottom: 1.25rem; border-bottom: 1px solid var(--line); }
+    h1 { font-size: clamp(2.5rem, 8vw, 4rem); }
+    p { color: var(--muted); overflow-wrap: anywhere; }
+</style>

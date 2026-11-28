@@ -1,0 +1,51 @@
+---
+import { shop } from '../../../config/shop';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+
+interface Props
+{
+    title: string;
+    error?: string;
+}
+
+const { title, error } = Astro.props;
+---
+
+<BaseLayout title={`${title} | ${shop.name}`} description="Geschützter Zugang zur Terminverwaltung.">
+    <section class="layout-width access">
+        <div class="card">
+            <img src={shop.logoPath} width="72" height="72" alt="" />
+            <h1>{title}</h1>
+            {error && <p class="form-error" role="alert">{error}</p>}
+            <slot />
+        </div>
+    </section>
+</BaseLayout>
+
+<style lang="scss">
+    .access { display: grid; justify-items: center; padding-block: clamp(2rem, 8vw, 5rem); }
+    .card {
+        width: min(100%, 30rem);
+        padding: clamp(1.4rem, 5vw, 2.5rem);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+    }
+    img { object-fit: contain; }
+    h1 { font-size: clamp(2.35rem, 9vw, 3.4rem); margin: .4rem 0 1.4rem; }
+    .form-error { color: var(--error); margin: 0 0 1rem; }
+    .card :global(form) { display: grid; gap: .9rem; }
+    .card :global(label) { display: grid; gap: .35rem; font-weight: 600; }
+    .card :global(input:not([type='hidden'])) {
+        width: 100%;
+        min-height: 3rem;
+        padding: .6rem .8rem;
+        border: 1px solid var(--control-line);
+        border-radius: var(--radius);
+        background: #0c0c0c;
+        color: var(--text);
+        font: inherit;
+    }
+    .card :global(.action) { margin-top: .25rem; }
+    .card :global(.form-link) { display: inline-block; margin-top: 1rem; color: var(--muted); }
+</style>

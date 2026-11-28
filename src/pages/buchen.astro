@@ -1,7 +1,7 @@
 ---
 import Icon from '../components/Icon.astro';
 import { routes, shop } from '../config/shop';
-import { SERVICES, formatPrice } from '../features/booking/domain/services';
+import { SERVICES, formatPrice } from '../../supabase/functions/_shared/services';
 import BaseLayout from '../layouts/BaseLayout.astro';
 
 const liveBooking = typeof __BEKO_LIVE_BOOKING__ !== 'undefined' && __BEKO_LIVE_BOOKING__;
@@ -68,6 +68,8 @@ const liveBooking = typeof __BEKO_LIVE_BOOKING__ !== 'undefined' && __BEKO_LIVE_
                                 <label for="demo-email">E-Mail-Adresse</label>
                                 <input id="demo-email" type="email" inputmode="email" maxlength="254" aria-describedby="demo-email-error" required />
                                 <p class="field-error" id="demo-email-error" hidden></p>
+                                <label for="booking-phone">Telefonnummer (optional)</label>
+                                <input id="booking-phone" type="tel" autocomplete="tel" maxlength="40" />
                             </div>
                             <div class="step-actions">
                                 <button class="action" type="submit">{liveBooking ? 'Termin buchen' : 'Demo abschliessen'}</button>

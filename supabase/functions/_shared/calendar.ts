@@ -1,6 +1,6 @@
 import { Temporal } from '@js-temporal/polyfill';
-import { BOOKING_HOURS, CLOSED_DATES } from '../../../config/bookingHours';
-import { createBookingDay, type BookingDay, type Opening } from '../domain/availability';
+import { BOOKING_HOURS, CLOSED_DATES } from './bookingHours.ts';
+import { createBookingDay, type BookingDay, type Opening } from './availability.ts';
 
 export interface TimeRange
 {
@@ -10,7 +10,7 @@ export interface TimeRange
 
 const TIME_ZONE = 'Europe/Zurich';
 const BOOKING_DAYS = 14;
-const SLOT_MINUTES = 10;
+const SLOT_MINUTES = 30;
 const MINUTE = 60_000;
 
 function localDate(now: number): Temporal.PlainDate
