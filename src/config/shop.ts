@@ -1,3 +1,5 @@
+import { BOOKING_HOURS } from '../../supabase/functions/_shared/bookingHours';
+
 function getReviewUrl(value: string | undefined): string | undefined
 {
     if (!value)
@@ -59,7 +61,12 @@ export const shop: ShopConfig = {
     directionsUrl: directionsUrl.href,
     reviewUrl: getReviewUrl(import.meta.env.PUBLIC_REVIEW_URL),
     logoPath: homePath + 'beko-logo.png',
-    openingHours: [],
+    openingHours: ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag']
+        .map((day, index) => {
+            const periods = BOOKING_HOURS[index + 1] ?? [];
+            const hours = periods.map(([opens, closes]) => opens + ' bis ' + closes).join(', ');
+            return day + ' ' + (hours || 'geschlossen');
+        }),
     phone: '',
     instagramUrl: ''
 };
