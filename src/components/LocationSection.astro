@@ -16,14 +16,20 @@ import { shop } from '../config/shop';
             <Icon name="route" />
             Route planen
         </a>
-        <div class="location-row hours">
-            <Icon name="clock" />
-            {shop.openingHours.length ? (
-                <div>{shop.openingHours.map((entry) => <p>{entry}</p>)}</div>
-            ) : (
-                <p>Öffnungszeiten folgen</p>
-            )}
-        </div>
+        <section class="opening-hours" aria-labelledby="opening-hours-heading">
+            <div class="location-row hours-heading">
+                <Icon name="clock" />
+                <h3 id="opening-hours-heading">Öffnungszeiten</h3>
+            </div>
+            <dl class="hours-list">
+                {shop.openingHours.map(({ day, hours }) => (
+                    <div class="hours-entry">
+                        <dt>{day}</dt>
+                        <dd>{hours}</dd>
+                    </div>
+                ))}
+            </dl>
+        </section>
     </div>
     <figure class="location-image">
         <Image
@@ -77,9 +83,40 @@ import { shop } from '../config/shop';
         text-transform: uppercase;
     }
 
-    .hours {
+    .opening-hours {
+        margin-top: 1.45rem;
+    }
+
+    .hours-heading {
+        align-items: center;
+        margin-top: 0;
+    }
+
+    .hours-heading h3 {
+        font-size: 1.4rem;
+        letter-spacing: .03em;
+        text-transform: uppercase;
+    }
+
+    .hours-list {
+        margin: .55rem 0 0 2.1rem;
+        font-size: .875rem;
+    }
+
+    .hours-entry {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: .55rem;
+        align-items: baseline;
+        padding-block: .35rem;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .hours-entry dd {
         color: var(--muted);
-        font-size: .9rem;
+        font-variant-numeric: tabular-nums;
+        text-align: right;
+        white-space: nowrap;
     }
 
     .location-image {

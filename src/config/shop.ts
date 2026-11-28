@@ -47,7 +47,7 @@ interface ShopConfig
     readonly directionsUrl: string;
     readonly reviewUrl: string | undefined;
     readonly logoPath: string;
-    readonly openingHours: readonly string[];
+    readonly openingHours: readonly { readonly day: string; readonly hours: string }[];
     readonly phone: string;
     readonly instagramUrl: string;
 }
@@ -65,7 +65,7 @@ export const shop: ShopConfig = {
         .map((day, index) => {
             const periods = BOOKING_HOURS[index + 1] ?? [];
             const hours = periods.map(([opens, closes]) => opens + ' bis ' + closes).join(', ');
-            return day + ' ' + (hours || 'geschlossen');
+            return { day, hours: hours || 'Geschlossen' };
         }),
     phone: '',
     instagramUrl: ''
